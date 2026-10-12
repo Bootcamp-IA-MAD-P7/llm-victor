@@ -19,10 +19,40 @@ describe('generatePost', () => {
         ),
     )
 
-    await expect(generatePost({ brief: 'hola' })).resolves.toEqual({
+    await expect(
+      generatePost({
+        brief: 'hola',
+        audience: 'tech-professionals',
+        tone: 'professional',
+      }),
+    ).resolves.toEqual({
       text: 'x',
       provider: 'groq',
       model: 'test',
+    })
+  })
+
+  it('sends the audience and tone in the request body', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'x', provider: 'groq', model: 'test' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generatePost({
+      brief: 'hola',
+      audience: 'business-leaders',
+      tone: 'inspiring',
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({
+      brief: 'hola',
+      audience: 'business-leaders',
+      tone: 'inspiring',
     })
   })
 
@@ -32,7 +62,11 @@ describe('generatePost', () => {
       vi.fn().mockResolvedValue(new Response('nope', { status: 500 })),
     )
 
-    const error = await generatePost({ brief: 'hola' }).catch((e: unknown) => e)
+    const error = await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+    }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBe(500)
@@ -44,7 +78,11 @@ describe('generatePost', () => {
       vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
     )
 
-    const error = await generatePost({ brief: 'hola' }).catch((e: unknown) => e)
+    const error = await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+    }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBeUndefined()
