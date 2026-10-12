@@ -61,8 +61,8 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 
 | Código | Cuándo ocurre | Qué debe hacer el consumidor |
 |---|---|---|
-| `400 Bad Request` | Falta `brief` o el cuerpo no es válido | Mostrar mensaje de error básico |
-| `500 Internal Server Error` | Error en la generación | Informar al usuario del fallo sin mostrar detalles internos |
+| `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, o el cuerpo no es válido | No enviar un briefing vacío; indicar al usuario que escriba un briefing |
+| `500 Internal Server Error` | Error en la generación (por ejemplo, fallo del proveedor) | Informar del fallo sin mostrar detalles internos y conservar el briefing para reintentar |
 
 ## Compatibilidad
 
