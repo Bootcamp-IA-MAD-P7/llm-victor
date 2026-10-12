@@ -12,7 +12,7 @@
 
 ## 3. Contrato y documentación
 
-- [ ] 3.1 Actualizar `docs/CONTRACTS/api.md` (campo `language` en `POST /generate` y versión 0.5.0) y el índice en `docs/CONTRACTS/README.md` si procede; verificar que el documento muestra los cuatro valores permitidos y el error 422.
+- [x] 3.1 Actualizar `docs/CONTRACTS/api.md` (campo `language` en `POST /generate` y versión 0.5.0) y el índice en `docs/CONTRACTS/README.md` si procede; verificar que el documento muestra los cuatro valores permitidos y el error 422.
 
 ## 4. Verificación
 
