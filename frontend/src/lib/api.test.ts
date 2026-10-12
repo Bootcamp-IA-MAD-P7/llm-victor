@@ -56,6 +56,57 @@ describe('generatePost', () => {
     })
   })
 
+  it('sends the context in the request body when provided', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'x', provider: 'groq', model: 'test' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+      context: '  dirigido a startups  ',
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+      context: 'dirigido a startups',
+    })
+  })
+
+  it('omits an empty context from the request body', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'x', provider: 'groq', model: 'test' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+      context: '   ',
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+    })
+  })
+
   it('throws an ApiError with the status on a server error', async () => {
     vi.stubGlobal(
       'fetch',

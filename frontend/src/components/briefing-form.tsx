@@ -20,6 +20,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
   const [brief, setBrief] = useState('')
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE)
   const [tone, setTone] = useState<Tone>(DEFAULT_TONE)
+  const [context, setContext] = useState('')
   const [validationError, setValidationError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -37,7 +38,12 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
     setSubmitting(true)
     onStart()
     try {
-      const res = await generatePost({ brief: trimmed, audience, tone })
+      const res = await generatePost({
+        brief: trimmed,
+        audience,
+        tone,
+        context,
+      })
       onResult(res.text)
     } catch (err) {
       onError(generationErrorMessage(err))
@@ -92,6 +98,16 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
           </select>
         </label>
       </div>
+      <label className="block text-sm font-medium">
+        Contexto (opcional)
+        <textarea
+          className="mt-1 w-full rounded-md border p-2"
+          rows={3}
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          placeholder="Contexto adicional que la generación debe tener en cuenta..."
+        />
+      </label>
       {validationError && (
         <p role="alert" className="text-sm text-destructive">
           {validationError}

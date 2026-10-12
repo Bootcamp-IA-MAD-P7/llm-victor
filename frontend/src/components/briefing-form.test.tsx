@@ -120,6 +120,59 @@ describe('BriefingForm', () => {
     expect(tone).toHaveValue('inspiring')
   })
 
+  it('offers an optional context field', async () => {
+    renderForm()
+
+    const context = screen.getByLabelText('Contexto (opcional)')
+    await userEvent.type(context, 'Dirigido a startups')
+
+    expect(context).toHaveValue('Dirigido a startups')
+  })
+
+  it('sends the written context when generating', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'publicación', provider: 'groq', model: 'x' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    renderForm()
+
+    await userEvent.type(
+      screen.getByLabelText('Contexto (opcional)'),
+      'Dirigido a startups',
+    )
+    await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
+    await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      context: 'Dirigido a startups',
+    })
+  })
+
+  it('omits the context when it is empty', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'publicación', provider: 'groq', model: 'x' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    renderForm()
+
+    await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
+    await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).not.toHaveProperty('context')
+  })
+
   it('sends the selected audience and tone when generating', async () => {
     const fetchMock = vi
       .fn()
