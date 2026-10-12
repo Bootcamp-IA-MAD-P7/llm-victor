@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.1.0
+- **Versión:** 0.2.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -32,6 +32,37 @@ Ninguna.
 | Código | Cuándo ocurre | Qué debe hacer el consumidor |
 |---|---|---|
 | Sin respuesta o error de red | La API no está en marcha o no es accesible | Indicar que la API no está disponible y permitir reintentar |
+
+
+
+## `POST /generate`
+
+Genera una publicación de LinkedIn a partir de un briefing enviado por el frontend.
+
+### Entrada
+
+`application/json`:
+
+| Campo | Tipo | Obligatorio | Significado |
+|---|---|---|---|
+| `brief` | `string` | Sí | Briefing del usuario que describe el tema e instrucciones |
+
+### Salida
+
+`200 OK` con `application/json`:
+
+| Campo | Tipo | Significado |
+|---|---|---|
+| `text` | `string` | Texto generado listo para revisar |
+| `provider` | `string` | Proveedor utilizado (ej. `groq`) |
+| `model` | `string` | Modelo utilizado |
+
+### Errores
+
+| Código | Cuándo ocurre | Qué debe hacer el consumidor |
+|---|---|---|
+| `400 Bad Request` | Falta `brief` o el cuerpo no es válido | Mostrar mensaje de error básico |
+| `500 Internal Server Error` | Error en la generación | Informar al usuario del fallo sin mostrar detalles internos |
 
 ## Compatibilidad
 

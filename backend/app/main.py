@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health
 from app.config import Settings
+
+from .api.generate import router as generate_router
+from .api.health import router as health_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -14,7 +16,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(health.router)
+    app.include_router(health_router)
+    app.include_router(generate_router)
     return app
 
 
