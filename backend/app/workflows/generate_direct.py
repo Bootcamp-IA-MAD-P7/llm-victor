@@ -32,6 +32,15 @@ class Tone(StrEnum):
     EDUCATIONAL = "educational"
 
 
+class Language(StrEnum):
+    """Output language for a generation."""
+
+    SPANISH = "es"
+    ENGLISH = "en"
+    FRENCH = "fr"
+    ITALIAN = "it"
+
+
 AUDIENCE_LABELS: dict[Audience, str] = {
     Audience.TECH_PROFESSIONALS: "profesionales de tecnología",
     Audience.AI_SPECIALISTS: "especialistas en IA",
@@ -46,13 +55,27 @@ TONE_LABELS: dict[Tone, str] = {
     Tone.EDUCATIONAL: "divulgativo",
 }
 
+LANGUAGE_LABELS: dict[Language, str] = {
+    Language.SPANISH: "español",
+    Language.ENGLISH: "inglés",
+    Language.FRENCH: "francés",
+    Language.ITALIAN: "italiano",
+}
 
-def build_prompt(brief: str, audience: Audience, tone: Tone, context: str | None = None) -> str:
+
+def build_prompt(
+    brief: str,
+    audience: Audience,
+    tone: Tone,
+    language: Language,
+    context: str | None = None,
+) -> str:
     """Compose the generation prompt from the briefing and its configuration."""
     prompt = (
         "Genera una publicación de LinkedIn basada en este briefing.\n"
         f"Audiencia: {AUDIENCE_LABELS[audience]}\n"
-        f"Tono: {TONE_LABELS[tone]}\n\n"
+        f"Tono: {TONE_LABELS[tone]}\n"
+        f"Idioma de salida: {LANGUAGE_LABELS[language]}\n\n"
         f"Briefing:\n{brief}"
     )
     if context:
@@ -75,6 +98,7 @@ def build_direct_graph(provider: GroqProvider | None = None) -> Any:
             str(state.get("brief", "")),
             cast(Audience, state.get("audience")),
             cast(Tone, state.get("tone")),
+            cast(Language, state.get("language")),
             state.get("context"),
         )
         result = provider.generate_text(prompt, model=state.get("model"))
@@ -101,6 +125,7 @@ def generate_direct(
     brief: str,
     audience: Audience,
     tone: Tone,
+    language: Language,
     context: str | None = None,
     model: str | None = None,
     provider: GroqProvider | None = None,
@@ -112,6 +137,7 @@ def generate_direct(
             "brief": brief,
             "audience": audience,
             "tone": tone,
+            "language": language,
             "context": context,
             "model": model,
         }
