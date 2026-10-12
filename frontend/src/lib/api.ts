@@ -14,6 +14,7 @@ export interface GenerateRequest {
   brief: string
   audience: Audience
   tone: Tone
+  context?: string
 }
 
 export interface GenerateResponse {
@@ -61,12 +62,19 @@ export function generationErrorMessage(error: unknown): string {
 export async function generatePost(
   req: GenerateRequest,
 ): Promise<GenerateResponse> {
+  const context = req.context?.trim()
+  const body: GenerateRequest = {
+    brief: req.brief,
+    audience: req.audience,
+    tone: req.tone,
+    ...(context ? { context } : {}),
+  }
   let response: Response
   try {
     response = await fetch(`${API_URL}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(GENERATE_TIMEOUT_MS),
     })
   } catch {
