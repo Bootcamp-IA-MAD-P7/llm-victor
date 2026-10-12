@@ -1,18 +1,16 @@
-<!-- Plantilla: sustituye los textos entre corchetes. Si acabas de crear el repositorio, sigue setup/README.md y borra este comentario al terminar. -->
+# AI Content Studio
 
-# [Nombre del proyecto]
-
-[Qué es y para quién, en una o dos frases.] Más contexto en [`docs/PROJECT.md`](docs/PROJECT.md).
+Plataforma web que convierte un briefing en contenido profesional para LinkedIn sobre inteligencia artificial, con el usuario en control de cómo se genera. Más contexto en [`docs/PROJECT.md`](docs/PROJECT.md).
 
 ## Estado
 
-El trabajo se sigue en [GitHub Issues](https://github.com/[owner]/[repo]/issues) y las versiones se publican en [Releases](https://github.com/[owner]/[repo]/releases).
+El trabajo se sigue en [GitHub Issues](https://github.com/Glezino/ai-content-generator/issues) y las versiones se publican en [Releases](https://github.com/Glezino/ai-content-generator/releases).
 
 ## Puesta en marcha
 
 <!-- Requisitos y los dos o tres comandos para arrancar. El detalle operativo está en docs/ARCHITECTURE.md §7. -->
 
-[Pendiente: aún no hay código ejecutable.]
+Pendiente: aún no hay código ejecutable.
 
 ## Contribuir
 
@@ -22,4 +20,4 @@ El trabajo se sigue en [GitHub Issues](https://github.com/[owner]/[repo]/issues)
 
 ## Licencia
 
-[Licencia, o «Sin licencia definida».]
+Sin licencia definida.
