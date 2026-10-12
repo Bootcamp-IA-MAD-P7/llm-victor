@@ -24,6 +24,7 @@ describe('generatePost', () => {
         brief: 'hola',
         audience: 'tech-professionals',
         tone: 'professional',
+        language: 'es',
       }),
     ).resolves.toEqual({
       text: 'x',
@@ -46,6 +47,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'business-leaders',
       tone: 'inspiring',
+      language: 'en',
     })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -53,6 +55,30 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'business-leaders',
       tone: 'inspiring',
+      language: 'en',
+    })
+  })
+
+  it('sends the language in the request body', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'x', provider: 'groq', model: 'test' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+      language: 'fr',
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      language: 'fr',
     })
   })
 
@@ -70,6 +96,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
       context: '  dirigido a startups  ',
     })
 
@@ -78,6 +105,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
       context: 'dirigido a startups',
     })
   })
@@ -96,6 +124,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
       context: '   ',
     })
 
@@ -104,6 +133,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
     })
   })
 
@@ -117,6 +147,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
     }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
@@ -133,6 +164,7 @@ describe('generatePost', () => {
       brief: 'hola',
       audience: 'tech-professionals',
       tone: 'professional',
+      language: 'es',
     }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
