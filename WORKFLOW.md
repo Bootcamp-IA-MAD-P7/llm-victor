@@ -19,7 +19,7 @@ flowchart TD
     plan --> exec
     subgraph exec["3 · Ejecución (por historia)"]
         direction LR
-        EX["explore ⏸ (opcional)"] --> PP["propose ⏸"] --> AP["apply ⏸"] --> PUB["verify · sync · checks · commits · PR"] --> REV["revisión 👤 ⏸"] --> ARC["archive · Closes"] --> MRG["merge 👤"] --> BT["tag beta (CI)"]
+        EX["explore ⏸ (opcional)"] --> PP["propose ⏸"] --> AP["apply ⏸"] --> PUB["verify · sync · checks · commits · PR · CI"] --> REV["aprobación ⏸"] --> ARC["archive · Closes"] --> MRG["merge 👤"] --> BT["tag beta (CI)"]
     end
     exec --> rel
     subgraph rel["4 · Release"]
@@ -153,15 +153,25 @@ Se trabaja una historia cada vez.
    4. Documentación afectada ([§2](#qué-actualizar-cuando-algo-cambia)).
    5. Commits por bloques lógicos ([CONTRIBUTING §5](CONTRIBUTING.md#5-commits)).
    6. Push y PR a `dev` con `Refs #N`. En la historia anota el cambio de OpenSpec y marca las tareas entregadas.
+   7. Esperar el [CI](#ci-del-pr).
 
-   La IA avisa con el enlace al PR y el resultado de `verify` y de los checks. Si algo falla y la corrección no cabe en el alcance, se detiene e informa.
+   La IA avisa con el enlace al PR, el resultado de `verify` y de los checks y el estado del CI. Si algo falla y la corrección no cabe en el alcance, se detiene e informa.
 
-6. **Revisar.** 👤 La persona revisa el PR y el CI en GitHub. La IA publica en el mismo PR las correcciones que pida, sin volver a pedir permiso; si cambian el comportamiento, repite `verify` y `sync`.
+6. **Revisar.** 👤 La persona revisa el PR en GitHub si lo considera necesario; no hace falta para comprobar el CI, porque la IA ya informa de su estado. La IA publica en el mismo PR las correcciones que pida, sin volver a pedir permiso; si cambian el comportamiento, repite `verify` y `sync`, y vuelve a esperar el CI.
 
-   ⏸ **Parada 4 — PR revisado.** Con la revisión conforme y el CI en verde, la persona autoriza el cierre.
+   ⏸ **Parada 4 — aprobación.** Con el CI en verde, la persona autoriza el cierre, haya revisado el PR o no. Sin esta aprobación no hay archive.
 
-7. **Archivar.** La IA ejecuta `archive` en un último commit que solo contiene el archivo del cambio, lo publica y cambia en el PR `Refs #N` por `Closes #N`, más `Closes #E` si es la última historia abierta de su épica.
-8. **Merge.** 👤 Con el CI en verde, la persona hace el merge a `dev`. GitHub cierra la historia y el CI crea el tag beta si el cambio afecta a la versión ([CONTRIBUTING §9](CONTRIBUTING.md#9-versiones-y-releases)).
+7. **Archivar.** La IA ejecuta `archive` en un último commit que solo contiene el archivo del cambio, lo publica, cambia en el PR `Refs #N` por `Closes #N` (más `Closes #E` si es la última historia abierta de su épica), espera el CI y avisa de que el PR está listo para el merge.
+8. **Merge.** 👤 La persona hace el merge a `dev`. GitHub cierra la historia y el CI crea el tag beta si el cambio afecta a la versión ([CONTRIBUTING §9](CONTRIBUTING.md#9-versiones-y-releases)).
+
+### CI del PR
+
+Cada vez que la IA publica commits en un PR, espera a que termine el CI y comprueba su resultado antes de informar.
+
+- **En verde:** informa de que el PR pasa el CI.
+- **En rojo:** analiza el fallo y publica un commit que lo corrija, si cabe en el alcance, y vuelve a esperar. Si ese commit tampoco lo arregla, o el fallo no cabe en el alcance, se detiene y la persona decide.
+
+La IA nunca entrega como listo un PR en rojo.
 
 ## 7. Fase 4 — Release
 

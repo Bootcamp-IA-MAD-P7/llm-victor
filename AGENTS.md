@@ -29,7 +29,7 @@ Ante dudas de alcance o prioridad, consulta `docs/PROJECT.md`. Al retomar una hi
 - leer, explorar, crear ramas y hacer commits locales;
 - ejecutar los checks, `verify`, `sync` y `openspec validate`;
 - actualizar la documentación y ajustar tareas dentro del alcance aprobado (infórmalo en la siguiente parada);
-- publicar correcciones en un PR en revisión;
+- publicar correcciones en un PR en revisión, incluido un commit que corrija un fallo del CI ([WORKFLOW, CI del PR](WORKFLOW.md#ci-del-pr));
 - crear las etiquetas y las Issues de un desglose aprobado.
 
 **Nunca:**
