@@ -20,4 +20,4 @@ Para decisiones locales y reversibles basta con el `design.md` del cambio de Ope
 
 | ADR | Título | Estado |
 |---|---|---|
-| — | — | — |
+| [ADR-0001](0001-docker-first-deployable-services.md) | Docker-first y servicios desplegables por separado | Aceptado |
