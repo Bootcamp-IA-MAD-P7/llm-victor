@@ -178,3 +178,90 @@ def test_generate_direct_builds_prompt_with_audience_and_tone() -> None:
     assert "especialistas en IA" in prompt
     assert "inspirador" in prompt
     assert "Sobre IA" in prompt
+
+
+def test_generate_accepts_request_without_context() -> None:
+    response = make_client().post("/generate", json={**VALID_CONFIG, "brief": "hola"})
+
+    assert response.status_code == 200
+
+
+def test_generate_accepts_request_with_context() -> None:
+    response = make_client().post(
+        "/generate",
+        json={**VALID_CONFIG, "brief": "hola", "context": "dirigido a startups"},
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("context", [None, "", "   "])
+def test_generate_normalizes_absent_context_to_none(
+    context: str | None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_generate_direct(*, context: str | None = None, **kwargs: Any) -> dict[str, str]:
+        captured["context"] = context
+        return {"text": "ok", "provider": "groq", "model": "test"}
+
+    monkeypatch.setattr(generate_module, "generate_direct", fake_generate_direct)
+
+    payload: dict[str, str] = {**VALID_CONFIG, "brief": "hola"}
+    if context is not None:
+        payload["context"] = context
+
+    response = make_client().post("/generate", json=payload)
+
+    assert response.status_code == 200
+    assert captured["context"] is None
+
+
+def test_generate_passes_context_to_workflow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_generate_direct(*, context: str | None = None, **kwargs: Any) -> dict[str, str]:
+        captured["context"] = context
+        return {"text": "ok", "provider": "groq", "model": "test"}
+
+    monkeypatch.setattr(generate_module, "generate_direct", fake_generate_direct)
+
+    response = make_client().post(
+        "/generate",
+        json={**VALID_CONFIG, "brief": "hola", "context": "  dirigido a startups  "},
+    )
+
+    assert response.status_code == 200
+    assert captured["context"] == "dirigido a startups"
+
+
+def test_generate_direct_builds_prompt_with_labelled_context() -> None:
+    provider = CapturingProvider()
+
+    generate_direct(
+        brief="Sobre IA",
+        audience=Audience.AI_SPECIALISTS,
+        tone=Tone.INSPIRING,
+        context="Dirigido a startups",
+        provider=provider,
+    )
+
+    prompt = provider.prompts[0]
+    assert "Dirigido a startups" in prompt
+    assert "Contexto adicional" in prompt
+    assert prompt.index("Briefing:") < prompt.index("Contexto adicional")
+
+
+def test_generate_direct_omits_context_block_without_context() -> None:
+    provider = CapturingProvider()
+
+    generate_direct(
+        brief="Sobre IA",
+        audience=Audience.AI_SPECIALISTS,
+        tone=Tone.INSPIRING,
+        provider=provider,
+    )
+
+    assert "Contexto adicional" not in provider.prompts[0]

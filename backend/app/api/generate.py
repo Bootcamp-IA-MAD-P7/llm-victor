@@ -12,6 +12,7 @@ class GenerateRequest(BaseModel):
     brief: str = Field(..., min_length=1)
     audience: Audience
     tone: Tone
+    context: str | None = None
 
     @field_validator("brief")
     @classmethod
@@ -20,6 +21,14 @@ class GenerateRequest(BaseModel):
         if not brief:
             raise ValueError("brief must not be blank")
         return brief
+
+    @field_validator("context")
+    @classmethod
+    def normalize_context(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        context = value.strip()
+        return context or None
 
 
 class GenerateResponse(BaseModel):
@@ -35,6 +44,7 @@ async def generate_post(req: GenerateRequest) -> GenerateResponse:
             brief=req.brief,
             audience=req.audience,
             tone=req.tone,
+            context=req.context,
         )
         return GenerateResponse(
             text=result.get("text", ""),
