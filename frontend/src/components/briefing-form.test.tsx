@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -102,5 +102,49 @@ describe('BriefingForm', () => {
     await vi.waitFor(() => expect(handlers.onError).toHaveBeenCalled())
     expect(handlers.onError.mock.calls[0][0]).toMatch(/conectar con la API/)
     expect(screen.getByLabelText('Briefing')).toHaveValue('Sobre IA')
+  })
+
+  it('offers the audience and tone options and allows changing them', async () => {
+    renderForm()
+
+    const audience = screen.getByLabelText('Audiencia')
+    const tone = screen.getByLabelText('Tono')
+
+    expect(within(audience).getAllByRole('option')).toHaveLength(4)
+    expect(within(tone).getAllByRole('option')).toHaveLength(4)
+
+    await userEvent.selectOptions(audience, 'ai-specialists')
+    await userEvent.selectOptions(tone, 'inspiring')
+
+    expect(audience).toHaveValue('ai-specialists')
+    expect(tone).toHaveValue('inspiring')
+  })
+
+  it('sends the selected audience and tone when generating', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'publicación', provider: 'groq', model: 'x' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    renderForm()
+
+    await userEvent.selectOptions(
+      screen.getByLabelText('Audiencia'),
+      'business-leaders',
+    )
+    await userEvent.selectOptions(screen.getByLabelText('Tono'), 'educational')
+    await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
+    await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({
+      brief: 'Sobre IA',
+      audience: 'business-leaders',
+      tone: 'educational',
+    })
   })
 })

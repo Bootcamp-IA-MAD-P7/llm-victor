@@ -2,8 +2,18 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const HEALTH_TIMEOUT_MS = 5000
 const GENERATE_TIMEOUT_MS = 30000
 
+export type Audience =
+  | 'tech-professionals'
+  | 'ai-specialists'
+  | 'business-leaders'
+  | 'general-audience'
+
+export type Tone = 'professional' | 'friendly' | 'inspiring' | 'educational'
+
 export interface GenerateRequest {
   brief: string
+  audience: Audience
+  tone: Tone
 }
 
 export interface GenerateResponse {
