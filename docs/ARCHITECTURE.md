@@ -89,7 +89,7 @@ sequenceDiagram
     participant API as api (LangGraph)
     participant Groq
     participant OR as OpenRouter
-    Usuario->>Web: Briefing, idioma, audiencia, tono y modelo
+    Usuario->>Web: Briefing, audiencia, tono, contexto, idioma y modelo
     Web->>API: Solicitud y, si corresponde, perfil
     API->>Groq: Generación con el modelo seleccionado
     alt Groq no disponible o con límite de uso
