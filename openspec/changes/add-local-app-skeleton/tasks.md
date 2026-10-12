@@ -24,7 +24,7 @@
 
 ## 4. CI
 
-- [ ] 4.1 Añadir a `ci.yml` los jobs `Frontend` (`npm ci`, `npm run check` y build) y `API` (`uv sync`, Ruff, mypy y pytest); verificar que pasan en el PR.
+- [x] 4.1 Añadir a `ci.yml` los jobs `Frontend` (`npm ci`, `npm run check` y build) y `API` (`uv sync`, Ruff, mypy y pytest); verificar que pasan en el PR.
 
 ## 5. Documentación
 
