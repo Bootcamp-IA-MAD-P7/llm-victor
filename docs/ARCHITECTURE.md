@@ -10,7 +10,7 @@
 
 ## 1. Visión general
 
-Monorepo con servicios que se ejecutan juntos en local con Docker Compose y se pueden desplegar por separado más adelante ([ADR-0001](ADR/0001-docker-first-deployable-services.md)): una web estática, una API que ejecuta flujos de IA explícitos y es la única que habla con los proveedores, y una base vectorial para el conocimiento de arXiv. El usuario elige el flujo; la orquestación autónoma es futura. Aún no hay código: todo es Objetivo o Candidata.
+Monorepo con servicios que se ejecutan juntos en local con Docker Compose y se pueden desplegar por separado más adelante ([ADR-0001](ADR/0001-docker-first-deployable-services.md)): una web estática, una API que ejecuta flujos de IA explícitos y es la única que habla con los proveedores, y una base vectorial para el conocimiento de arXiv. El usuario elige el flujo; la orquestación autónoma es futura. Hoy funcionan el entorno local y la comprobación de salud de la API; el resto es Objetivo o Candidata.
 
 ```mermaid
 flowchart LR
@@ -26,17 +26,17 @@ flowchart LR
 
 | Área | Tecnología | Estado | Decisión |
 |---|---|---|---|
-| Interfaz web | React, Vite, TypeScript, Tailwind CSS y shadcn/ui; web estática servida como servicio propio | Objetivo | — |
-| API | Python y FastAPI | Objetivo | — |
+| Interfaz web | React, Vite, TypeScript, Tailwind CSS y shadcn/ui; web estática servida como servicio propio | Actual | — |
+| API | Python 3.13 y FastAPI, con uv | Actual | — |
 | Flujos de IA | LangGraph; LangChain para modelos, embeddings y recuperación donde aporte valor | Objetivo | — |
 | Generación de texto | Groq como proveedor principal y OpenRouter como alternativo | Objetivo | — |
 | Generación de imágenes | Cloudflare Workers AI, solo con modelo y cuota gratuitos, sin facturación ni fallback de pago | Candidata | Se confirma en I3-E1 |
 | Embeddings | Modelo multilingüe local en el backend y la ingesta; BGE-M3 como candidato inicial | Candidata | Se decide en I4-E2 |
-| Base vectorial | Qdrant, contenedor local con volumen persistente; remoto por configuración en el futuro | Objetivo | — |
+| Base vectorial | Qdrant, contenedor local con volumen persistente; remoto por configuración en el futuro | Actual: la API aún no lo usa | — |
 | Almacenamiento de grafo | Por decidir; no entra en Compose hasta aprobar Graph RAG | Candidata | Se decide en I5-E1 |
-| Entorno local | Docker y Docker Compose | Objetivo | [ADR-0001](ADR/0001-docker-first-deployable-services.md) |
-| Comandos de desarrollo | Makefile (GNU Make) sobre `docker compose` | Objetivo | [ADR-0001](ADR/0001-docker-first-deployable-services.md) |
-| Calidad | Herramientas de test, lint y tipos por decidir | Candidata | Se decide en I1-E1 |
+| Entorno local | Docker y Docker Compose | Actual | [ADR-0001](ADR/0001-docker-first-deployable-services.md) |
+| Comandos de desarrollo | Makefile (GNU Make) sobre `docker compose` | Actual | [ADR-0001](ADR/0001-docker-first-deployable-services.md) |
+| Calidad | Web: ESLint, Prettier, `tsc` y Vitest con Testing Library. API: Ruff, mypy y pytest | Actual | — |
 | Despliegue futuro | Railway para frontend y API como servicios separados; Vercel como alternativa para la web | Candidata | — |
 | Evolución posterior | WebLLM para generación en el navegador; Supabase/PostgreSQL para persistir perfil e historial | Candidata | — |
 
@@ -46,17 +46,17 @@ flowchart LR
 
 | Componente | Responsabilidad | Datos que posee | Depende de | Estado |
 |---|---|---|---|---|
-| `frontend` | Recoge el briefing y la configuración, ofrece las capacidades disponibles y presenta el resultado. No contiene claves de proveedores | Perfil del creador (`localStorage`) | `api` | Objetivo |
-| `api` | Servicio FastAPI (`backend/`): valida solicitudes, aplica el catálogo de modelos, recibe el perfil solo si el usuario lo activa y ejecuta el flujo elegido. Sin estado persistente | Secretos de proveedores (entorno) | `workflows`, `providers`, `knowledge` | Objetivo |
+| `frontend` | Recoge el briefing y la configuración, ofrece las capacidades disponibles y presenta el resultado. No contiene claves de proveedores | Perfil del creador (`localStorage`) | `api` | Actual: solo el estado de la API |
+| `api` | Servicio FastAPI (`backend/`): valida solicitudes, aplica el catálogo de modelos, recibe el perfil solo si el usuario lo activa y ejecuta el flujo elegido. Sin estado persistente | Secretos de proveedores (entorno) | `workflows`, `providers`, `knowledge` | Actual: solo `/health` |
 | `workflows` | Flujos explícitos de LangGraph: generación directa y, según se implementen, recuperación, imagen y evaluación | — | `providers`, `knowledge` | Objetivo |
 | `providers` | Pasarela de modelos (Groq con fallback a OpenRouter) y servicio de imagen (Cloudflare Workers AI). Informa del proveedor y el modelo efectivos | — | Groq, OpenRouter, Cloudflare | Objetivo |
 | `knowledge` | Ingesta de arXiv, embeddings locales y recuperación en Qdrant; más adelante, relaciones de Graph RAG | Manifiesto versionado de artículos | `qdrant`, arXiv | Objetivo |
 | `evaluation` | Herramientas internas para ejecutar casos y comparar prompts, modelos o flujos; separadas de la interfaz para creadores | Resultados locales de evaluación (formato por definir) | `workflows` | Objetivo |
-| `qdrant` | Base vectorial con la imagen oficial | Fragmentos, vectores y metadatos de fuente | — | Objetivo |
+| `qdrant` | Base vectorial con la imagen oficial | Fragmentos, vectores y metadatos de fuente | — | Actual: sin uso todavía |
 
 ## 4. Estructura del repositorio
 
-Estructura objetivo; todavía no existe.
+Ya existen `frontend/`, `backend/app/api/`, `backend/tests/` y los archivos de la raíz; los demás módulos de `backend/app/` son objetivo y los crea la historia que los necesite.
 
 ```text
 .
@@ -104,7 +104,7 @@ sequenceDiagram
 
 - El fallback a OpenRouter solo se activa por indisponibilidad, límite o *rate limit* de Groq; los errores de validación de la solicitud no lo activan. Si el fallback cambia de modelo, la respuesta lo indica.
 - Si la imagen falla o se agota la cuota de Cloudflare, el error se comunica sin perder el texto.
-- Contrato `frontend` → `api`: se registra en [CONTRACTS](CONTRACTS/README.md) en I1-E1, junto con su contrato de error.
+- Contrato `frontend` → `api`: [API HTTP](CONTRACTS/api.md). La generación y su contrato de error se añaden en I1-E1.
 
 ### RAG
 
@@ -137,12 +137,17 @@ flowchart LR
 
 ## 7. Entorno local y operación
 
-- **Docker Compose** levanta como mínimo `frontend`, `api` y `qdrant`; la ingesta se ejecuta bajo demanda. Cada servicio de aplicación tiene su Dockerfile, configuración externa y comprobación de salud.
-- **Makefile:** es la fuente de verdad de los comandos, con operaciones globales y por servicio: construir y descargar imágenes; iniciar, detener, reiniciar y consultar el estado; ver logs y abrir una consola; ejecutar la ingesta; limpiar artefactos y, en un comando separado y explícito, borrar volúmenes. Ejemplos: `make up`, `make up-api`, `make pull-qdrant`, `make logs-frontend`, `make ingest`. No usa sintaxis exclusiva de Bash, para funcionar en Windows, macOS y Linux con GNU Make.
+- **Requisitos:** Docker y GNU Make. No hace falta Node ni Python en el equipo.
+- **Docker Compose** levanta `frontend` (<http://localhost:5173>), `api` (<http://localhost:8000>, documentación interactiva en `/docs`) y `qdrant` (<http://localhost:6333/dashboard>); los puertos se cambian en `.env` (`.env.example`). Los servidores de desarrollo recargan el código al guardar. La ingesta se ejecutará bajo demanda. Cada servicio tiene su comprobación de salud.
+- **Makefile:** es la fuente de verdad de los comandos (`make help`). Hoy: `build`, `pull`, `up`, `down`, `restart`, `ps`, `logs` y `check`. Objetivo, con operaciones globales y por servicio: construir y descargar imágenes; iniciar, detener, reiniciar y consultar el estado; ver logs y abrir una consola; ejecutar la ingesta; limpiar artefactos y, en un comando separado y explícito, borrar volúmenes. Ejemplos: `make up`, `make up-api`, `make pull-qdrant`, `make logs-frontend`, `make ingest`. No usa sintaxis exclusiva de Bash, para funcionar en Windows, macOS y Linux con GNU Make.
 
 ## 8. Calidad: tests, CI y observabilidad
 
-Por decidir. El walking skeleton (I1-E1) elige las herramientas de test, lint y tipos de `frontend` y `api` y las añade al CI.
+- **`frontend`:** ESLint, Prettier, `tsc` y Vitest con Testing Library (tests de componente); `npm run check` los agrupa.
+- **`api`:** Ruff (lint y formato), mypy en modo estricto y pytest con el cliente de pruebas de FastAPI.
+- **Local:** `make check` ejecuta todos los checks dentro de los contenedores.
+- **CI** (`.github/workflows/ci.yml`): en cada PR, los jobs `OpenSpec`, `Frontend` (checks y build) y `API`, que ejecutan las mismas herramientas en el runner.
+- **Observabilidad:** por ahora, los logs de los contenedores (`make logs`).
 
 ## 9. Despliegue
 

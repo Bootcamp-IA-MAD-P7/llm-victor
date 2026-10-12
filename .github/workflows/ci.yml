@@ -1,5 +1,5 @@
-# CI inicial: valida OpenSpec en cada PR. El walking skeleton añade los checks del stack
-# (lint, formato, tipos, tests y build) como jobs nuevos (CONTRIBUTING §8).
+# Checks de cada PR (CONTRIBUTING §8). Usan las mismas herramientas que `make check`,
+# pero en el runner y sin Docker, para aprovechar la caché y tardar menos.
 name: CI
 
 on:
@@ -20,3 +20,39 @@ jobs:
           node-version: 24
       - run: npm install -g @fission-ai/openspec@latest
       - run: openspec validate --all --no-interactive
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.11.24"
+          working-directory: backend
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run pytest
