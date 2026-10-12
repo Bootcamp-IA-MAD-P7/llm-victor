@@ -7,6 +7,9 @@
 .opencode/
 .claude/
 
+# Bloqueo efímero del CLI de OpenSpec al archivar (no se versiona)
+.openspec-archive.lock
+
 # Sistema operativo
 .DS_Store
 Thumbs.db
