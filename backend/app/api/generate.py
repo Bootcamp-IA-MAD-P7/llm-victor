@@ -1,7 +1,7 @@
 """Generate endpoint."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..workflows.generate_direct import generate_direct
 
@@ -10,6 +10,14 @@ router = APIRouter()
 
 class GenerateRequest(BaseModel):
     brief: str = Field(..., min_length=1)
+
+    @field_validator("brief")
+    @classmethod
+    def reject_blank_brief(cls, value: str) -> str:
+        brief = value.strip()
+        if not brief:
+            raise ValueError("brief must not be blank")
+        return brief
 
 
 class GenerateResponse(BaseModel):
