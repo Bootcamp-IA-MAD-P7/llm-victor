@@ -1,0 +1,22 @@
+# CI inicial: valida OpenSpec en cada PR. El walking skeleton añade los checks del stack
+# (lint, formato, tipos, tests y build) como jobs nuevos (CONTRIBUTING §8).
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  openspec:
+    name: OpenSpec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install -g @fission-ai/openspec@latest
+      - run: openspec validate --all --no-interactive

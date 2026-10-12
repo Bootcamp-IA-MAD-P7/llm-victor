@@ -1,0 +1,83 @@
+# Tags y releases al mergear un PR (CONTRIBUTING §9):
+# - En dev, si lo mergeado cambia la versión → tag vX.Y.Z-beta.N en el último commit de dev.
+# - En main → tag vX.Y.Z (último beta sin sufijo) y GitHub Release con notas generadas.
+name: Tags
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev, main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tags
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Tag beta
+        if: github.base_ref == 'dev'
+        run: |
+          if [ -n "$(git tag --points-at HEAD --list 'v*')" ]; then
+            echo "HEAD ya tiene tag."; exit 0
+          fi
+
+          # Nivel de cambio de un rango de commits: major, minor, patch o none.
+          bump() {
+            log=$(git log --format='%s%n%b' "$1")
+            if grep -qE '^[a-z]+(\([^)]*\))?!:|^BREAKING[ -]CHANGE:' <<< "$log"; then echo major
+            elif grep -qE '^feat(\([^)]*\))?:' <<< "$log"; then echo minor
+            elif grep -qE '^(fix|perf)(\([^)]*\))?:' <<< "$log"; then echo patch
+            else echo none
+            fi
+          }
+
+          # Solo hay tag si lo mergeado desde el último beta cambia la versión.
+          prev=$(git describe --tags --abbrev=0 --match 'v*-beta.*' 2>/dev/null || true)
+          if [ "$(bump "${prev:+$prev..}HEAD")" = none ]; then
+            echo "Sin cambios de versión."; exit 0
+          fi
+
+          # Siguiente versión estable según los commits desde el último tag estable.
+          last=$(git tag --list 'v[0-9]*' --sort=-v:refname | grep -v -- - | head -n 1 || true)
+          if [ -z "$last" ]; then
+            version=0.1.0
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            case "$(bump "$last..HEAD")" in
+              major)
+                if [ "$major" -eq 0 ]; then minor=$((minor + 1)); else major=$((major + 1)); minor=0; fi
+                patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              *) patch=$((patch + 1)) ;;
+            esac
+            version="$major.$minor.$patch"
+          fi
+
+          n=$(git tag --list "v$version-beta.*" | sed 's/.*-beta\.//' | sort -n | tail -n 1)
+          tag="v$version-beta.$(( ${n:-0} + 1 ))"
+          git tag "$tag"
+          git push origin "$tag"
+          echo "Creado $tag"
+
+      - name: Tag y release estable
+        if: github.base_ref == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          beta=$(git tag --merged HEAD --list 'v*-beta.*' --sort=-v:refname | head -n 1)
+          version="${beta%-beta.*}"
+          if [ -z "$beta" ] || git rev-parse -q --verify "refs/tags/$version" > /dev/null; then
+            echo "Sin versión nueva que publicar."; exit 0
+          fi
+          gh release create "$version" --target "$(git rev-parse HEAD)" --title "$version" --generate-notes
