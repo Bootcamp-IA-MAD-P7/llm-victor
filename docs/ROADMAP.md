@@ -20,37 +20,37 @@ Primero, un flujo sencillo y controlable que convierta un briefing en una public
 
 **Resultado:** una aplicación local, operada con Docker Compose y Makefile, genera y deja revisar una publicación de LinkedIn desde un briefing con audiencia, tono, contexto, idioma y modelo. La web y la API quedan listas para construirse y configurarse por separado, sin desplegar en producción.
 
-#### I1-E1 — Walking skeleton: publicación desde un briefing · Issue: pendiente
+#### I1-E1 — Walking skeleton: publicación desde un briefing · Issue: [#2](https://github.com/Glezino/ai-content-generator/issues/2)
 
 - **Resultado:** desde la web se envía un briefing, la API genera el texto con Groq y la web lo muestra; un briefing vacío o un fallo de generación se comunican de forma comprensible, sin perder el formulario. La web, la API y Qdrant arrancan con Docker Compose y se operan con el Makefile (comandos globales y por servicio). La configuración va por entorno, sin secretos, y el CI ejecuta los checks del stack.
 - **Requisitos:** RF-01, RF-03
 - **Depende de:** —
 
-#### I1-E2 — Configurar audiencia, tono y contexto · Issue: pendiente
+#### I1-E2 — Configurar audiencia, tono y contexto · Issue: [#3](https://github.com/Glezino/ai-content-generator/issues/3)
 
 - **Resultado:** el usuario elige audiencia y tono y añade contexto opcional antes de generar; esos valores llegan a la API y se reflejan en el texto, sin que el contexto se confunda con las instrucciones del sistema.
 - **Requisitos:** RF-02
 - **Depende de:** I1-E1, porque amplía su formulario y su contrato.
 
-#### I1-E3 — Generar en cuatro idiomas · Issue: pendiente
+#### I1-E3 — Generar en cuatro idiomas · Issue: [#4](https://github.com/Glezino/ai-content-generator/issues/4)
 
 - **Resultado:** cada generación se puede pedir en español (valor inicial), inglés, francés o italiano y llega en ese idioma; las opciones no válidas se rechazan.
 - **Requisitos:** RF-04
 - **Depende de:** I1-E1, porque amplía su formulario y su contrato.
 
-#### I1-E4 — Elegir un modelo disponible · Issue: pendiente
+#### I1-E4 — Elegir un modelo disponible · Issue: [#5](https://github.com/Glezino/ai-content-generator/issues/5)
 
 - **Resultado:** la API expone un catálogo de modelos de texto con identificadores estables y sin secretos; el usuario elige uno, la API lo valida y lo usa, y avisa si deja de estar disponible.
 - **Requisitos:** RF-05
 - **Depende de:** I1-E1, porque amplía su formulario y su contrato.
 
-#### I1-E5 — Fallback de proveedor y trazabilidad · Issue: pendiente
+#### I1-E5 — Fallback de proveedor y trazabilidad · Issue: [#6](https://github.com/Glezino/ai-content-generator/issues/6)
 
 - **Resultado:** si Groq no está disponible o alcanza un límite, la API recurre a OpenRouter (nunca ante errores de validación), y la respuesta y la web muestran el proveedor y el modelo efectivos.
 - **Requisitos:** RNF-03, RNF-07
 - **Depende de:** I1-E4, porque la selección explícita debe existir antes del fallback para conservar la trazabilidad.
 
-#### I1-E6 — Servicios desplegables por separado · Issue: pendiente
+#### I1-E6 — Servicios desplegables por separado · Issue: [#7](https://github.com/Glezino/ai-content-generator/issues/7)
 
 - **Resultado:** las imágenes de la web y de la API se construyen por separado y se conectan a una API y a un Qdrant externos solo por configuración (URL de la API, CORS y secretos); queda documentado lo necesario para un hosting futuro, sin desplegar.
 - **Requisitos:** RNF-05; [ADR-0001](ADR/0001-docker-first-deployable-services.md)
