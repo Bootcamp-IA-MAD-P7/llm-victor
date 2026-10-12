@@ -12,6 +12,17 @@ export interface GenerateResponse {
   model: string
 }
 
+/** Error from a request to the API, with the HTTP status when there was a response. */
+export class ApiError extends Error {
+  readonly status: number | undefined
+
+  constructor(message: string, status?: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 /** Returns whether the API answers its health endpoint in time. */
 export async function checkApiHealth(): Promise<boolean> {
   try {
@@ -24,17 +35,38 @@ export async function checkApiHealth(): Promise<boolean> {
   }
 }
 
+/** Translates a generation error into a message the user can understand. */
+export function generationErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.status !== undefined) {
+    if (error.status >= 500) {
+      return 'No se pudo generar el contenido. Vuelve a intentarlo en unos momentos.'
+    }
+    if (error.status >= 400) {
+      return 'La solicitud no es válida. Revisa el briefing e inténtalo de nuevo.'
+    }
+  }
+  return 'No se pudo conectar con la API. Comprueba que esté disponible e inténtalo de nuevo.'
+}
+
 export async function generatePost(
   req: GenerateRequest,
 ): Promise<GenerateResponse> {
-  const response = await fetch(`${API_URL}/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-    signal: AbortSignal.timeout(GENERATE_TIMEOUT_MS),
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal: AbortSignal.timeout(GENERATE_TIMEOUT_MS),
+    })
+  } catch {
+    throw new ApiError('Failed to reach the API')
+  }
   if (!response.ok) {
-    throw new Error('Failed to generate post')
+    throw new ApiError(
+      `Generation failed with status ${response.status}`,
+      response.status,
+    )
   }
   return (await response.json()) as GenerateResponse
 }
