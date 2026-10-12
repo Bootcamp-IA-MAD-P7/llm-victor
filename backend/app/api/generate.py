@@ -3,13 +3,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from ..workflows.generate_direct import generate_direct
+from ..workflows.generate_direct import Audience, Tone, generate_direct
 
 router = APIRouter()
 
 
 class GenerateRequest(BaseModel):
     brief: str = Field(..., min_length=1)
+    audience: Audience
+    tone: Tone
 
     @field_validator("brief")
     @classmethod
@@ -29,7 +31,11 @@ class GenerateResponse(BaseModel):
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_post(req: GenerateRequest) -> GenerateResponse:
     try:
-        result = generate_direct(brief=req.brief)
+        result = generate_direct(
+            brief=req.brief,
+            audience=req.audience,
+            tone=req.tone,
+        )
         return GenerateResponse(
             text=result.get("text", ""),
             provider=result.get("provider", "groq"),
