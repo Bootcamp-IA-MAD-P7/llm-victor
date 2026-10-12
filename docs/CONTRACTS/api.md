@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.4.0
+- **Versión:** 0.5.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -48,6 +48,7 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 | `brief` | `string` | Sí | Briefing del usuario que describe el tema e instrucciones |
 | `audience` | `string` (enum) | Sí | Audiencia destinataria. Valores permitidos: `tech-professionals`, `ai-specialists`, `business-leaders`, `general-audience` |
 | `tone` | `string` (enum) | Sí | Tono de la publicación. Valores permitidos: `professional`, `friendly`, `inspiring`, `educational` |
+| `language` | `string` (enum) | Sí | Idioma de salida del contenido. Valores permitidos: `es`, `en`, `fr`, `it` |
 | `context` | `string` | No | Contexto adicional aportado por el usuario. Se trata como dato del usuario y no sustituye las instrucciones del sistema. Si falta o está vacío, la generación no lo usa |
 
 ### Salida
@@ -64,7 +65,7 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 
 | Código | Cuándo ocurre | Qué debe hacer el consumidor |
 |---|---|---|
-| `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, `audience` o `tone` faltan o no son un valor permitido, o el cuerpo no es válido | No enviar un briefing vacío ni valores fuera de los permitidos; indicar al usuario que revise el briefing y las opciones |
+| `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, `audience`, `tone` o `language` faltan o no son un valor permitido, o el cuerpo no es válido | No enviar un briefing vacío ni valores fuera de los permitidos; indicar al usuario que revise el briefing y las opciones |
 | `500 Internal Server Error` | Error en la generación (por ejemplo, fallo del proveedor) | Informar del fallo sin mostrar detalles internos y conservar el briefing para reintentar |
 
 ## Compatibilidad
