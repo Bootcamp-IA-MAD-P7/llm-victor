@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.3.0
+- **Versión:** 0.4.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -48,6 +48,7 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 | `brief` | `string` | Sí | Briefing del usuario que describe el tema e instrucciones |
 | `audience` | `string` (enum) | Sí | Audiencia destinataria. Valores permitidos: `tech-professionals`, `ai-specialists`, `business-leaders`, `general-audience` |
 | `tone` | `string` (enum) | Sí | Tono de la publicación. Valores permitidos: `professional`, `friendly`, `inspiring`, `educational` |
+| `context` | `string` | No | Contexto adicional aportado por el usuario. Se trata como dato del usuario y no sustituye las instrucciones del sistema. Si falta o está vacío, la generación no lo usa |
 
 ### Salida
 
