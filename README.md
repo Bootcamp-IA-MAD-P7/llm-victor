@@ -10,7 +10,13 @@ El trabajo se sigue en [GitHub Issues](https://github.com/Glezino/ai-content-gen
 
 <!-- Requisitos y los dos o tres comandos para arrancar. El detalle operativo está en docs/ARCHITECTURE.md §7. -->
 
-Pendiente: aún no hay código ejecutable.
+Requisitos: Docker y GNU Make.
+
+```sh
+make up
+```
+
+Abre la web en <http://localhost:5173>; la API responde en <http://localhost:8000>. `make help` lista el resto de comandos, y `make check` ejecuta los checks de calidad. Para cambiar los puertos, copia `.env.example` como `.env`.
 
 ## Contribuir
 
