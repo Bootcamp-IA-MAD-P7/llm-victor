@@ -9,6 +9,7 @@ type State = 'idle' | 'loading' | 'done' | 'error'
 function App() {
   const [state, setState] = useState<State>('idle')
   const [result, setResult] = useState('')
+  const [error, setError] = useState('')
 
   return (
     <main className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center gap-6 px-4">
@@ -23,16 +24,24 @@ function App() {
       </div>
       <ApiStatus />
       <BriefingForm
-        onStart={() => setState('loading')}
+        onStart={() => {
+          setError('')
+          setState('loading')
+        }}
         onResult={(text) => {
           setResult(text)
           setState('done')
         }}
-        onError={() => setState('error')}
+        onError={(message) => {
+          setError(message)
+          setState('error')
+        }}
       />
-      {state === 'loading' && <p>Cargando...</p>}
+      {state === 'loading' && <p role="status">Generando…</p>}
       {state === 'error' && (
-        <p className="text-destructive">Error al generar el contenido.</p>
+        <p role="alert" className="text-destructive">
+          {error}
+        </p>
       )}
       {state === 'done' && <ResultView text={result} />}
     </main>
