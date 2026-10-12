@@ -1,12 +1,14 @@
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import type { Audience, Tone } from '@/lib/api'
+import type { Audience, Language, Tone } from '@/lib/api'
 import { generatePost, generationErrorMessage } from '@/lib/api'
 import {
   AUDIENCE_OPTIONS,
   DEFAULT_AUDIENCE,
+  DEFAULT_LANGUAGE,
   DEFAULT_TONE,
+  LANGUAGE_OPTIONS,
   TONE_OPTIONS,
 } from '@/lib/generation-options'
 
@@ -20,6 +22,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
   const [brief, setBrief] = useState('')
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE)
   const [tone, setTone] = useState<Tone>(DEFAULT_TONE)
+  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE)
   const [context, setContext] = useState('')
   const [validationError, setValidationError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -42,6 +45,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
         brief: trimmed,
         audience,
         tone,
+        language,
         context,
       })
       onResult(res.text)
@@ -68,7 +72,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
           placeholder="Escribe el briefing para generar una publicación de LinkedIn..."
         />
       </label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-sm font-medium">
           Audiencia
           <select
@@ -91,6 +95,20 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
             onChange={(e) => setTone(e.target.value as Tone)}
           >
             {TONE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">
+          Idioma
+          <select
+            className="mt-1 w-full rounded-md border p-2"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Language)}
+          >
+            {LANGUAGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

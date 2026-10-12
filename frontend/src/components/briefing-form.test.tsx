@@ -120,6 +120,41 @@ describe('BriefingForm', () => {
     expect(tone).toHaveValue('inspiring')
   })
 
+  it('offers the four languages with Spanish by default and allows changing them', async () => {
+    renderForm()
+
+    const language = screen.getByLabelText('Idioma')
+
+    expect(within(language).getAllByRole('option')).toHaveLength(4)
+    expect(language).toHaveValue('es')
+
+    await userEvent.selectOptions(language, 'it')
+
+    expect(language).toHaveValue('it')
+  })
+
+  it('sends the selected language when generating', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'publicación', provider: 'groq', model: 'x' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    renderForm()
+
+    await userEvent.selectOptions(screen.getByLabelText('Idioma'), 'fr')
+    await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
+    await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      language: 'fr',
+    })
+  })
+
   it('offers an optional context field', async () => {
     renderForm()
 
@@ -198,6 +233,7 @@ describe('BriefingForm', () => {
       brief: 'Sobre IA',
       audience: 'business-leaders',
       tone: 'educational',
+      language: 'es',
     })
   })
 })

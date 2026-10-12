@@ -10,10 +10,13 @@ export type Audience =
 
 export type Tone = 'professional' | 'friendly' | 'inspiring' | 'educational'
 
+export type Language = 'es' | 'en' | 'fr' | 'it'
+
 export interface GenerateRequest {
   brief: string
   audience: Audience
   tone: Tone
+  language: Language
   context?: string
 }
 
@@ -67,6 +70,7 @@ export async function generatePost(
     brief: req.brief,
     audience: req.audience,
     tone: req.tone,
+    language: req.language,
     ...(context ? { context } : {}),
   }
   let response: Response
