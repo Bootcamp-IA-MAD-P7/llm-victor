@@ -17,7 +17,7 @@ class GroqProvider:
         Returns dict with text, provider, model.
         Falls back to simple stub if API key not configured (for dev/test).
         """
-        model_name = model or os.getenv("DEFAULT_MODEL_GROQ", "llama-3.1-8b-instant")
+        model_name = str(model or os.getenv("DEFAULT_MODEL_GROQ", "llama-3.1-8b-instant"))
 
         if not self.api_key:
             # Fallback stub for local development without key
@@ -28,7 +28,7 @@ class GroqProvider:
             }
 
         try:
-            from groq import Groq  # type: ignore[import-not-found]
+            from groq import Groq
 
             client = Groq(api_key=self.api_key)
             completion = client.chat.completions.create(
