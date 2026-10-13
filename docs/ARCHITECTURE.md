@@ -62,6 +62,8 @@ Ya existen `frontend/`, `backend/app/api/`, `backend/tests/` y los archivos de l
 .
 ├── frontend/
 │   ├── Dockerfile
+│   ├── nginx.conf       # Servidor de la imagen de producción
+│   ├── config/          # Configuración del build (URL de la API)
 │   └── src/
 ├── backend/
 │   ├── Dockerfile
@@ -130,7 +132,7 @@ flowchart LR
 ## 6. Datos, configuración y secretos
 
 - **Persistencia:** el perfil vive en el `localStorage` del navegador y queda ligado a su origen, así que no se comparte entre `localhost` y un dominio desplegado. Qdrant guarda fragmentos, vectores y metadatos en un volumen de Compose. La API no persiste briefings, generaciones, imágenes ni metadatos de ejecución: los devuelve en la respuesta.
-- **Configuración:** cada servicio se configura por entorno. La web recibe la URL de la API al compilar; la API configura sus orígenes CORS (local y dominio futuro) y la URL y clave de Qdrant (local o remoto). `.env.example` contiene solo nombres y valores inocuos.
+- **Configuración:** cada servicio se configura por entorno. La web recibe la URL de la API al compilar (`VITE_API_URL`): un build de producción falla si falta o no es una URL `http`/`https` absoluta, y solo el servidor de desarrollo y los tests usan `http://localhost:8000` por defecto; cambiarla exige recompilar la web; la API configura sus orígenes CORS (local y dominio futuro) y la URL y clave de Qdrant (local o remoto). `.env.example` contiene solo nombres y valores inocuos.
 - **Secretos:** las claves de Groq, OpenRouter y Cloudflare solo están en el backend, como variables de entorno. El navegador nunca llama a un proveedor con un secreto.
 - **Datos enviados a terceros:** el briefing, y el perfil si el usuario lo activa, van al proveedor de texto elegido; la petición de imagen va a Cloudflare cuando se solicita.
 - **Acceso:** sin cuentas ni multiusuario. Antes de abrir una instancia pública hay que resolver la protección de acceso, los límites de uso y el abuso de cuota.
@@ -139,7 +141,7 @@ flowchart LR
 
 - **Requisitos:** Docker y GNU Make. No hace falta Node ni Python en el equipo.
 - **Docker Compose** levanta `frontend` (<http://localhost:5173>), `api` (<http://localhost:8000>, documentación interactiva en `/docs`) y `qdrant` (<http://localhost:6333/dashboard>); los puertos se cambian en `.env` (`.env.example`). Los servidores de desarrollo recargan el código al guardar. La ingesta se ejecutará bajo demanda. Cada servicio tiene su comprobación de salud.
-- **Makefile:** es la fuente de verdad de los comandos (`make help`). Comandos globales para el conjunto: `build`, `pull`, `up`, `down`, `restart`, `ps`, `logs` y `check`. Comandos por servicio con el formato `<operación>-<servicio>` (`build-frontend`, `up-api`, `logs-frontend`, `shell-qdrant`…): construir o descargar la imagen (`pull-qdrant`, porque Qdrant no se construye); iniciar, detener, reiniciar, consultar el estado, ver los logs y abrir una consola en un servicio sin tocar el resto. `clean-volumes` es el único comando que borra los volúmenes y es destructivo. Objetivo: ejecutar la ingesta y limpiar artefactos de build. No usa sintaxis exclusiva de Bash, para funcionar en Windows, macOS y Linux con GNU Make.
+- **Makefile:** es la fuente de verdad de los comandos (`make help`). Comandos globales para el conjunto: `build`, `pull`, `up`, `down`, `restart`, `ps`, `logs` y `check`. Comandos por servicio con el formato `<operación>-<servicio>` (`build-frontend`, `up-api`, `logs-frontend`, `shell-qdrant`…): construir o descargar la imagen (`pull-qdrant`, porque Qdrant no se construye); iniciar, detener, reiniciar, consultar el estado, ver los logs y abrir una consola en un servicio sin tocar el resto. `clean-volumes` es el único comando que borra los volúmenes y es destructivo. `make image-frontend VITE_API_URL=https://…` construye la imagen de producción de la web sin Compose. Objetivo: ejecutar la ingesta y limpiar artefactos de build. No usa sintaxis exclusiva de Bash, para funcionar en Windows, macOS y Linux con GNU Make.
 
 ## 8. Calidad: tests, CI y observabilidad
 
@@ -154,7 +156,8 @@ flowchart LR
 No se despliega nada en producción en esta fase; cuentas, planes, dominios y protección de acceso se deciden al planificar el despliegue.
 
 - `frontend` y `api` se despliegan por separado desde sus Dockerfiles. Railway puede crear servicios separados desde un monorepo; el Compose local no se publica como una única aplicación ([monorepos](https://docs.railway.com/deployments/monorepo), [Docker Compose](https://docs.railway.com/guides/docker-compose)).
-- Vite genera archivos estáticos que se pueden servir desde Railway o Vercel; en Vercel hay que configurar el fallback de rutas de la SPA y la URL pública de la API ([Vercel: Vite](https://vercel.com/docs/frameworks/frontend/vite)).
+- **Web con Docker:** la etapa `prod` del `Dockerfile` de `frontend` (la última, la que se construye sin `--target`) compila la web y la sirve con nginx sin privilegios en el puerto 8080, con fallback de rutas de la SPA. Recibe la URL pública de la API como argumento de build `VITE_API_URL` (en Railway, una variable del servicio); sin ella, la construcción falla. En local: `make image-frontend VITE_API_URL=https://…`.
+- **Web como estáticos:** en un hosting estático como Vercel se ejecuta `npm run build` con `VITE_API_URL` como variable de build, se publica `dist/` y se configura el fallback de rutas de la SPA ([Vercel: Vite](https://vercel.com/docs/frameworks/frontend/vite)).
 - La API no guarda estado de sesión. Qdrant se conecta por URL y clave a una instancia remota, y Cloudflare Workers AI se consume como API externa.
 
 ## 10. Decisiones y contratos
