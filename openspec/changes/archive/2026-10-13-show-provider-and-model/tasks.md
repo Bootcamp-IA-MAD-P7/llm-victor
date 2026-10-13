@@ -7,7 +7,7 @@
 
 ## 2. Verificación
 
-- [ ] 2.1 Sincronizar las specs (`openspec sync`), ejecutar `openspec validate` y los checks del proyecto (`make check`), y confirmar que las casillas de la historia #17 (respuesta con proveedor y modelo efectivos, y su presentación junto al resultado) quedan cubiertas.
+- [x] 2.1 Sincronizar las specs (`openspec sync`), ejecutar `openspec validate` y los checks del proyecto (`make check`), y confirmar que las casillas de la historia #17 (respuesta con proveedor y modelo efectivos, y su presentación junto al resultado) quedan cubiertas.
 
 ## Workflow follow-up
 
