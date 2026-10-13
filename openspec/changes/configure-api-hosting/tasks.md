@@ -13,7 +13,7 @@
 
 ## 3. CI
 
-- [ ] 3.1 Añadir al job `API` de `.github/workflows/ci.yml` la construcción de la imagen `prod`; verificar en el CI del PR.
+- [x] 3.1 Añadir al job `API` de `.github/workflows/ci.yml` la construcción de la imagen `prod`; verificar en el CI del PR.
 
 ## 4. Documentación
 
