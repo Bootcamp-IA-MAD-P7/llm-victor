@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import type { Audience, Language, Model, Tone } from '@/lib/api'
+import type {
+  Audience,
+  GenerateResponse,
+  Language,
+  Model,
+  Tone,
+} from '@/lib/api'
 import {
   ApiError,
   fetchModels,
@@ -18,7 +24,7 @@ import {
 } from '@/lib/generation-options'
 
 interface Props {
-  onResult: (text: string) => void
+  onResult: (result: GenerateResponse) => void
   onStart: () => void
   onError: (message: string) => void
 }
@@ -82,7 +88,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
         model,
         context,
       })
-      onResult(res.text)
+      onResult(res)
     } catch (err) {
       onError(generationErrorMessage(err))
       if (err instanceof ApiError && err.status === 409) {

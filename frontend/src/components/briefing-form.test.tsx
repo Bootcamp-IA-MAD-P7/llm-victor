@@ -96,7 +96,11 @@ describe('BriefingForm', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
 
     await vi.waitFor(() =>
-      expect(handlers.onResult).toHaveBeenCalledWith('publicación'),
+      expect(handlers.onResult).toHaveBeenCalledWith({
+        text: 'publicación',
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
+      }),
     )
   })
 
