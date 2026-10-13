@@ -46,8 +46,8 @@ flowchart LR
 
 | Componente | Responsabilidad | Datos que posee | Depende de | Estado |
 |---|---|---|---|---|
-| `frontend` | Recoge el briefing y la configuración, ofrece las capacidades disponibles y presenta el resultado. No contiene claves de proveedores | Perfil del creador (`localStorage`) | `api` | Actual: solo el estado de la API |
-| `api` | Servicio FastAPI (`backend/`): valida solicitudes, aplica el catálogo de modelos, recibe el perfil solo si el usuario lo activa y ejecuta el flujo elegido. Sin estado persistente | Secretos de proveedores (entorno) | `workflows`, `providers`, `knowledge` | Actual: solo `/health` |
+| `frontend` | Recoge el briefing y la configuración, ofrece las capacidades disponibles y presenta el resultado. No contiene claves de proveedores | Perfil del creador (`localStorage`) | `api` | Actual: estado de la API, catálogo de modelos y formulario de generación |
+| `api` | Servicio FastAPI (`backend/`): valida solicitudes, aplica el catálogo de modelos, recibe el perfil solo si el usuario lo activa y ejecuta el flujo elegido. Sin estado persistente | Secretos de proveedores (entorno) | `workflows`, `providers`, `knowledge` | Actual: `/health`, `/models` y `/generate` |
 | `workflows` | Flujos explícitos de LangGraph: generación directa y, según se implementen, recuperación, imagen y evaluación | — | `providers`, `knowledge` | Objetivo |
 | `providers` | Pasarela de modelos (Groq con fallback a OpenRouter) y servicio de imagen (Cloudflare Workers AI). Informa del proveedor y el modelo efectivos | — | Groq, OpenRouter, Cloudflare | Objetivo |
 | `knowledge` | Ingesta de arXiv, embeddings locales y recuperación en Qdrant; más adelante, relaciones de Graph RAG | Manifiesto versionado de artículos | `qdrant`, arXiv | Objetivo |
