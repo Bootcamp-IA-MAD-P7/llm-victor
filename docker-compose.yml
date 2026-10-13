@@ -34,6 +34,7 @@ services:
       - "${API_PORT:-8000}:8000"
     environment:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${FRONTEND_PORT:-5173}}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
       WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - ./backend:/app
