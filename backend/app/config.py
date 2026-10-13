@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     openrouter_api_key: str = ""
 
+    # Vector store: local by default, any Qdrant through the environment
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: str = ""
+
     # Defaults
     default_model_groq: str = "llama-3.1-8b-instant"
     openrouter_model: str = "meta-llama/llama-3.1-8b-instruct"
