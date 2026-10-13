@@ -18,4 +18,4 @@
 
 ## 4. Verificación
 
-- [ ] 4.1 Sincronizar las specs (`openspec sync`), ejecutar `openspec validate` y los checks del proyecto (`make check`), y confirmar que las casillas de la historia #16 cubren el selector, la validación y uso del modelo y el aviso de modelo no disponible.
+- [x] 4.1 Sincronizar las specs (`openspec sync`), ejecutar `openspec validate` y los checks del proyecto (`make check`), y confirmar que las casillas de la historia #16 cubren el selector, la validación y uso del modelo y el aviso de modelo no disponible.
