@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.6.0
+- **Versión:** 0.7.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -71,6 +71,7 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 | `audience` | `string` (enum) | Sí | Audiencia destinataria. Valores permitidos: `tech-professionals`, `ai-specialists`, `business-leaders`, `general-audience` |
 | `tone` | `string` (enum) | Sí | Tono de la publicación. Valores permitidos: `professional`, `friendly`, `inspiring`, `educational` |
 | `language` | `string` (enum) | Sí | Idioma de salida del contenido. Valores permitidos: `es`, `en`, `fr`, `it` |
+| `model` | `string` | Sí | Identificador del modelo elegido del catálogo devuelto por `GET /models`. Debe estar entre los modelos configurados; la generación usa ese modelo |
 | `context` | `string` | No | Contexto adicional aportado por el usuario. Se trata como dato del usuario y no sustituye las instrucciones del sistema. Si falta o está vacío, la generación no lo usa |
 
 ### Salida
@@ -87,7 +88,8 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 
 | Código | Cuándo ocurre | Qué debe hacer el consumidor |
 |---|---|---|
-| `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, `audience`, `tone` o `language` faltan o no son un valor permitido, o el cuerpo no es válido | No enviar un briefing vacío ni valores fuera de los permitidos; indicar al usuario que revise el briefing y las opciones |
+| `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, `audience`, `tone`, `language` o `model` faltan o no son un valor permitido (`model` fuera del catálogo), o el cuerpo no es válido | No enviar un briefing vacío ni valores fuera de los permitidos; indicar al usuario que revise el briefing y las opciones |
+| `409 Conflict` | El `model` estaba en el catálogo pero el proveedor ya no lo ofrece (modelo retirado o inexistente) | Comunicar que el modelo ya no está disponible y permitir elegir otro; conservar el briefing. El sistema no sustituye el modelo automáticamente |
 | `500 Internal Server Error` | Error en la generación (por ejemplo, fallo del proveedor) | Informar del fallo sin mostrar detalles internos y conservar el briefing para reintentar |
 
 ## Compatibilidad
