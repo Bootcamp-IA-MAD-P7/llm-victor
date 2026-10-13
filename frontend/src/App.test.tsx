@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -13,7 +13,11 @@ function stubFetch(
   health: () => Promise<Response> = () =>
     Promise.resolve(new Response('{"status":"ok"}')),
   models: () => Promise<Response> = () =>
-    Promise.resolve(new Response('{"models":[]}')),
+    Promise.resolve(
+      new Response(
+        '{"models":[{"id":"llama-3.1-8b-instant","label":"Llama 3.1 8B Instant"}]}',
+      ),
+    ),
 ) {
   vi.stubGlobal(
     'fetch',
@@ -35,6 +39,11 @@ describe('App', () => {
     stubFetch(() => pending)
 
     render(<App />)
+    await waitFor(() =>
+      expect(screen.getByLabelText('Modelo')).toHaveValue(
+        'llama-3.1-8b-instant',
+      ),
+    )
     await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
     await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
 
@@ -53,6 +62,11 @@ describe('App', () => {
     stubFetch(() => Promise.reject(new TypeError('Failed to fetch')))
 
     render(<App />)
+    await waitFor(() =>
+      expect(screen.getByLabelText('Modelo')).toHaveValue(
+        'llama-3.1-8b-instant',
+      ),
+    )
     await userEvent.type(screen.getByLabelText('Briefing'), 'Sobre IA')
     await userEvent.click(screen.getByRole('button', { name: 'Generar' }))
 

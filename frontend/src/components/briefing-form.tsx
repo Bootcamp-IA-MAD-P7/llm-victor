@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import type { Audience, Language, Tone } from '@/lib/api'
-import { generatePost, generationErrorMessage } from '@/lib/api'
+import type { Audience, Language, Model, Tone } from '@/lib/api'
+import {
+  ApiError,
+  fetchModels,
+  generatePost,
+  generationErrorMessage,
+} from '@/lib/api'
 import {
   AUDIENCE_OPTIONS,
   DEFAULT_AUDIENCE,
@@ -23,9 +28,36 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
   const [audience, setAudience] = useState<Audience>(DEFAULT_AUDIENCE)
   const [tone, setTone] = useState<Tone>(DEFAULT_TONE)
   const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE)
+  const [models, setModels] = useState<Model[]>([])
+  const [modelsFailed, setModelsFailed] = useState(false)
+  const [model, setModel] = useState('')
   const [context, setContext] = useState('')
   const [validationError, setValidationError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const applyModels = useCallback((result: Model[]) => {
+    setModels(result)
+    setModelsFailed(false)
+    setModel((current) =>
+      result.some((item) => item.id === current)
+        ? current
+        : (result[0]?.id ?? ''),
+    )
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    fetchModels()
+      .then((result) => {
+        if (active) applyModels(result)
+      })
+      .catch(() => {
+        if (active) setModelsFailed(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [applyModels])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,6 +68,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
       setValidationError('Escribe un briefing para generar la publicación.')
       return
     }
+    if (!model) return
 
     setValidationError('')
     setSubmitting(true)
@@ -46,11 +79,17 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
         audience,
         tone,
         language,
+        model,
         context,
       })
       onResult(res.text)
     } catch (err) {
       onError(generationErrorMessage(err))
+      if (err instanceof ApiError && err.status === 409) {
+        fetchModels()
+          .then(applyModels)
+          .catch(() => setModelsFailed(true))
+      }
     } finally {
       setSubmitting(false)
     }
@@ -117,6 +156,26 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
         </label>
       </div>
       <label className="block text-sm font-medium">
+        Modelo
+        <select
+          className="mt-1 w-full rounded-md border p-2"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          disabled={modelsFailed || models.length === 0}
+        >
+          {models.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {modelsFailed && (
+        <p role="alert" className="text-sm text-destructive">
+          No se pudieron cargar los modelos disponibles.
+        </p>
+      )}
+      <label className="block text-sm font-medium">
         Contexto (opcional)
         <textarea
           className="mt-1 w-full rounded-md border p-2"
@@ -131,7 +190,7 @@ export function BriefingForm({ onResult, onStart, onError }: Props) {
           {validationError}
         </p>
       )}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting || !model}>
         Generar
       </Button>
     </form>

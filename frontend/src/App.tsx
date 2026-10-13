@@ -2,7 +2,6 @@ import { useState } from 'react'
 
 import { ApiStatus } from '@/components/api-status'
 import { BriefingForm } from '@/components/briefing-form'
-import { ModelCatalog } from '@/components/model-catalog'
 import { ResultView } from '@/components/result-view'
 
 type State = 'idle' | 'loading' | 'done' | 'error'
@@ -24,7 +23,6 @@ function App() {
         </p>
       </div>
       <ApiStatus />
-      <ModelCatalog />
       <BriefingForm
         onStart={() => {
           setError('')

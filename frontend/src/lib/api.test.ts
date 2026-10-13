@@ -7,6 +7,8 @@ import {
   generationErrorMessage,
 } from './api'
 
+const MODEL = 'llama-3.1-8b-instant'
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -30,6 +32,7 @@ describe('generatePost', () => {
         audience: 'tech-professionals',
         tone: 'professional',
         language: 'es',
+        model: MODEL,
       }),
     ).resolves.toEqual({
       text: 'x',
@@ -53,6 +56,7 @@ describe('generatePost', () => {
       audience: 'business-leaders',
       tone: 'inspiring',
       language: 'en',
+      model: MODEL,
     })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -61,6 +65,7 @@ describe('generatePost', () => {
       audience: 'business-leaders',
       tone: 'inspiring',
       language: 'en',
+      model: MODEL,
     })
   })
 
@@ -79,11 +84,36 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'fr',
+      model: MODEL,
     })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(JSON.parse(init.body as string)).toMatchObject({
       language: 'fr',
+    })
+  })
+
+  it('sends the selected model in the request body', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ text: 'x', provider: 'groq', model: 'test' }),
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generatePost({
+      brief: 'hola',
+      audience: 'tech-professionals',
+      tone: 'professional',
+      language: 'es',
+      model: 'llama-3.3-70b',
+    })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      model: 'llama-3.3-70b',
     })
   })
 
@@ -102,6 +132,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
       context: '  dirigido a startups  ',
     })
 
@@ -111,6 +142,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
       context: 'dirigido a startups',
     })
   })
@@ -130,6 +162,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
       context: '   ',
     })
 
@@ -139,6 +172,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
     })
   })
 
@@ -153,6 +187,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
     }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
@@ -170,6 +205,7 @@ describe('generatePost', () => {
       audience: 'tech-professionals',
       tone: 'professional',
       language: 'es',
+      model: MODEL,
     }).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(ApiError)
@@ -187,6 +223,12 @@ describe('generationErrorMessage', () => {
   it('explains an invalid request', () => {
     expect(generationErrorMessage(new ApiError('x', 422))).toMatch(
       /solicitud no es válida/,
+    )
+  })
+
+  it('explains that the selected model is no longer available', () => {
+    expect(generationErrorMessage(new ApiError('x', 409))).toMatch(
+      /ya no está disponible/,
     )
   })
 

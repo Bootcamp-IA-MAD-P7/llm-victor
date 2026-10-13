@@ -18,6 +18,7 @@ export interface GenerateRequest {
   audience: Audience
   tone: Tone
   language: Language
+  model: string
   context?: string
 }
 
@@ -82,6 +83,9 @@ export async function fetchModels(): Promise<Model[]> {
 /** Translates a generation error into a message the user can understand. */
 export function generationErrorMessage(error: unknown): string {
   if (error instanceof ApiError && error.status !== undefined) {
+    if (error.status === 409) {
+      return 'El modelo seleccionado ya no está disponible. Elige otro modelo e inténtalo de nuevo.'
+    }
     if (error.status >= 500) {
       return 'No se pudo generar el contenido. Vuelve a intentarlo en unos momentos.'
     }
@@ -101,6 +105,7 @@ export async function generatePost(
     audience: req.audience,
     tone: req.tone,
     language: req.language,
+    model: req.model,
     ...(context ? { context } : {}),
   }
   let response: Response
