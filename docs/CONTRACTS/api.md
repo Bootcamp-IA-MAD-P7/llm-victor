@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.5.0
+- **Versión:** 0.6.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -33,7 +33,29 @@ Ninguna.
 |---|---|---|
 | Sin respuesta o error de red | La API no está en marcha o no es accesible | Indicar que la API no está disponible y permitir reintentar |
 
+## `GET /models`
 
+Devuelve el catálogo de modelos de texto disponibles para la generación, configurados en la API. No expone secretos ni detalles internos del proveedor.
+
+### Entrada
+
+Ninguna.
+
+### Salida
+
+`200 OK` con `application/json`:
+
+| Campo | Tipo | Significado |
+|---|---|---|
+| `models` | `array` | Modelos disponibles |
+| `models[].id` | `string` | Identificador estable del modelo |
+| `models[].label` | `string` | Etiqueta legible para el usuario |
+
+### Errores
+
+| Código | Cuándo ocurre | Qué debe hacer el consumidor |
+|---|---|---|
+| Sin respuesta o error de red | La API no está en marcha o no es accesible | Indicar que no se pudieron cargar los modelos disponibles |
 
 ## `POST /generate`
 
