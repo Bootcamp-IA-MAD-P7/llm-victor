@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL
 const HEALTH_TIMEOUT_MS = 5000
 const GENERATE_TIMEOUT_MS = 30000
 const MODELS_TIMEOUT_MS = 5000
