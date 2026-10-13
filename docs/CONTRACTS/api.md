@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.8.0
+- **Versión:** 0.9.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -32,6 +32,28 @@ Ninguna.
 | Código | Cuándo ocurre | Qué debe hacer el consumidor |
 |---|---|---|
 | Sin respuesta o error de red | La API no está en marcha o no es accesible | Indicar que la API no está disponible y permitir reintentar |
+
+## `GET /health/qdrant`
+
+Indica si la API llega a Qdrant con su configuración actual (`QDRANT_URL` y `QDRANT_API_KEY`, [ARCHITECTURE §6](../ARCHITECTURE.md#6-datos-configuración-y-secretos)): Qdrant debe responder y aceptar la clave. Sirve para comprobar el despliegue; la web no lo consume.
+
+### Entrada
+
+Ninguna.
+
+### Salida
+
+`200 OK` con:
+
+| Campo | Tipo | Significado |
+|---|---|---|
+| `status` | `"ok"` | Qdrant responde y acepta la clave configurada |
+
+### Errores
+
+| Código | Cuándo ocurre | Qué debe hacer el consumidor |
+|---|---|---|
+| `503 Service Unavailable` | Qdrant no responde en 3 s, la URL no es válida o la clave falta o no es correcta. El cuerpo es `{"detail": "Qdrant is not available"}`, sin la clave ni detalles internos; la causa queda en el log de la API | Revisar `QDRANT_URL`, `QDRANT_API_KEY` y el estado de Qdrant. `GET /health` sigue respondiendo `200` |
 
 ## `GET /models`
 
