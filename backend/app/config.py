@@ -18,3 +18,4 @@ class Settings(BaseSettings):
 
     # Defaults
     default_model_groq: str = "llama-3.1-8b-instant"
+    openrouter_model: str = "meta-llama/llama-3.1-8b-instruct"
