@@ -1,5 +1,5 @@
 # Comandos del proyecto (docs/ARCHITECTURE.md §7). Requieren Docker y GNU Make.
-# Las recetas solo invocan docker compose para funcionar igual en Windows, macOS y Linux.
+# Las recetas solo invocan docker y docker compose para funcionar igual en Windows, macOS y Linux.
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
@@ -7,7 +7,7 @@ COMPOSE := docker compose
 	build-frontend up-frontend down-frontend restart-frontend ps-frontend logs-frontend shell-frontend \
 	build-api up-api down-api restart-api ps-api logs-api shell-api \
 	pull-qdrant up-qdrant down-qdrant restart-qdrant ps-qdrant logs-qdrant shell-qdrant \
-	clean-volumes
+	clean-volumes image-frontend
 
 help:
 	$(info Uso: make COMANDO)
@@ -36,6 +36,9 @@ help:
 	$(info )
 	$(info Calidad:)
 	$(info make check         Ejecuta los checks de calidad de la web y la API)
+	$(info )
+	$(info Despliegue:)
+	$(info make image-frontend VITE_API_URL=https://...  Construye la imagen de producción de la web)
 	@exit 0
 
 build:
@@ -89,6 +92,10 @@ logs-frontend:
 
 shell-frontend:
 	$(COMPOSE) exec frontend sh
+
+# Imagen de producción, sin Compose; el build falla si falta VITE_API_URL.
+image-frontend:
+	docker build --target prod --build-arg VITE_API_URL=$(VITE_API_URL) -t ai-content-studio-frontend:prod frontend
 
 # api
 
