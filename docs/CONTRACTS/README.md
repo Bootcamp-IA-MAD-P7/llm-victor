@@ -17,4 +17,4 @@ Archivo `nombre-del-contrato.md`, creado a partir de [`_template.md`](_template.
 
 | Contrato | Productor → consumidores | Versión | Estado |
 |---|---|---|---|
-| [API HTTP](api.md) | `api` → `frontend` | 0.6.0 | Aceptado |
+| [API HTTP](api.md) | `api` → `frontend` | 0.7.0 | Aceptado |
