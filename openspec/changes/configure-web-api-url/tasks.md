@@ -12,7 +12,7 @@
 
 ## 3. CI
 
-- [ ] 3.1 En el job `Frontend` de `.github/workflows/ci.yml`, definir `VITE_API_URL: https://api.example.com` para `npm run build` y añadir un paso que construya la imagen `prod`; verificar en el CI del PR.
+- [x] 3.1 En el job `Frontend` de `.github/workflows/ci.yml`, definir `VITE_API_URL: https://api.example.com` para `npm run build` y añadir un paso que construya la imagen `prod`; verificar en el CI del PR.
 
 ## 4. Documentación
 
