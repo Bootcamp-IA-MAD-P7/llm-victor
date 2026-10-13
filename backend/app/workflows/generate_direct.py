@@ -11,6 +11,7 @@ except Exception:  # pragma: no cover
     StateGraph = None
     END = "END"
 
+from ..providers.gateway import TextProvider
 from ..providers.groq import GroqProvider
 
 
@@ -87,7 +88,7 @@ def build_prompt(
     return prompt
 
 
-def build_direct_graph(provider: GroqProvider | None = None) -> Any:
+def build_direct_graph(provider: TextProvider | None = None) -> Any:
     """Build LangGraph for direct generation."""
 
     if provider is None:
@@ -128,7 +129,7 @@ def generate_direct(
     language: Language,
     context: str | None = None,
     model: str | None = None,
-    provider: GroqProvider | None = None,
+    provider: TextProvider | None = None,
 ) -> dict[str, Any]:
     """Execute direct generation."""
     graph = build_direct_graph(provider)

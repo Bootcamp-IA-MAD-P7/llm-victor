@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field, field_validator
 
 from ..catalog import parse_catalog
 from ..config import Settings
-from ..providers.groq import ModelUnavailableError
+from ..providers.gateway import TextProviderGateway
+from ..providers.groq import GroqProvider, ModelUnavailableError
+from ..providers.openrouter import OpenRouterProvider
 from ..workflows.generate_direct import Audience, Language, Tone, generate_direct
 
 router = APIRouter()
@@ -52,6 +54,13 @@ async def generate_post(req: GenerateRequest, request: Request) -> GenerateRespo
         raise HTTPException(status_code=422, detail="Unknown model")
 
     try:
+        provider = TextProviderGateway(
+            primary=GroqProvider(api_key=settings.groq_api_key or None),
+            fallback=OpenRouterProvider(
+                api_key=settings.openrouter_api_key or None,
+                model=settings.openrouter_model,
+            ),
+        )
         result = generate_direct(
             brief=req.brief,
             audience=req.audience,
@@ -59,6 +68,7 @@ async def generate_post(req: GenerateRequest, request: Request) -> GenerateRespo
             language=req.language,
             model=req.model,
             context=req.context,
+            provider=provider,
         )
         return GenerateResponse(
             text=result.get("text", ""),
