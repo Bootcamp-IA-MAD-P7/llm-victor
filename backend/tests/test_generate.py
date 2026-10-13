@@ -22,6 +22,14 @@ VALID_CONFIG: dict[str, str] = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _isolate_provider_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep generation tests hermetic from real provider keys in the environment."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_MODEL", raising=False)
+
+
 def make_client() -> TestClient:
     return TestClient(create_app(Settings(cors_origins="http://localhost:5173")))
 
@@ -481,3 +489,82 @@ def test_generate_direct_omits_context_block_without_context() -> None:
     )
 
     assert "Contexto adicional" not in provider.prompts[0]
+
+
+class StubProviderError(Exception):
+    """Provider error with the status code the fallback classifier inspects."""
+
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+        super().__init__(f"provider error {status_code}")
+
+
+def _primary_raising(error: Exception) -> type:
+    class Primary:
+        def __init__(self, **kwargs: Any) -> None:
+            pass
+
+        def generate_text(self, prompt: str, model: str | None = None) -> dict[str, str]:
+            raise error
+
+    return Primary
+
+
+def _recording_fallback() -> tuple[type, list[tuple[str, str | None]]]:
+    calls: list[tuple[str, str | None]] = []
+
+    class Fallback:
+        def __init__(self, *, api_key: str | None = None, model: str | None = None) -> None:
+            self._model = model
+
+        def generate_text(self, prompt: str, model: str | None = None) -> dict[str, str]:
+            calls.append((prompt, model))
+            return {"text": "or", "provider": "openrouter", "model": str(self._model)}
+
+    return Fallback, calls
+
+
+def test_generate_falls_back_to_openrouter_on_eligible_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fallback, calls = _recording_fallback()
+    monkeypatch.setattr(generate_module, "GroqProvider", _primary_raising(StubProviderError(503)))
+    monkeypatch.setattr(generate_module, "OpenRouterProvider", fallback)
+
+    response = make_client().post("/generate", json={**VALID_CONFIG, "brief": "hola"})
+
+    assert response.status_code == 200
+    assert response.json()["provider"] == "openrouter"
+    assert response.json()["model"] == "meta-llama/llama-3.1-8b-instruct"
+    assert len(calls) == 1
+    assert calls[0][1] is None
+
+
+def test_generate_does_not_fall_back_on_validation_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fallback, calls = _recording_fallback()
+    monkeypatch.setattr(generate_module, "GroqProvider", _primary_raising(StubProviderError(400)))
+    monkeypatch.setattr(generate_module, "OpenRouterProvider", fallback)
+
+    response = make_client().post("/generate", json={**VALID_CONFIG, "brief": "hola"})
+
+    assert response.status_code == 500
+    assert calls == []
+
+
+def test_generate_does_not_fall_back_on_model_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fallback, calls = _recording_fallback()
+    monkeypatch.setattr(
+        generate_module,
+        "GroqProvider",
+        _primary_raising(ModelUnavailableError("llama-3.1-8b-instant")),
+    )
+    monkeypatch.setattr(generate_module, "OpenRouterProvider", fallback)
+
+    response = make_client().post("/generate", json={**VALID_CONFIG, "brief": "hola"})
+
+    assert response.status_code == 409
+    assert calls == []
