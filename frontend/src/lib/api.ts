@@ -1,6 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const HEALTH_TIMEOUT_MS = 5000
 const GENERATE_TIMEOUT_MS = 30000
+const MODELS_TIMEOUT_MS = 5000
 
 export type Audience =
   | 'tech-professionals'
@@ -26,6 +27,15 @@ export interface GenerateResponse {
   model: string
 }
 
+export interface Model {
+  id: string
+  label: string
+}
+
+export interface ModelsResponse {
+  models: Model[]
+}
+
 /** Error from a request to the API, with the HTTP status when there was a response. */
 export class ApiError extends Error {
   readonly status: number | undefined
@@ -47,6 +57,26 @@ export async function checkApiHealth(): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/** Returns the text models the API offers. */
+export async function fetchModels(): Promise<Model[]> {
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}/models`, {
+      signal: AbortSignal.timeout(MODELS_TIMEOUT_MS),
+    })
+  } catch {
+    throw new ApiError('Failed to reach the API')
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      `Models request failed with status ${response.status}`,
+      response.status,
+    )
+  }
+  const data = (await response.json()) as ModelsResponse
+  return data.models
 }
 
 /** Translates a generation error into a message the user can understand. */

@@ -12,12 +12,16 @@ function stubFetch(
   generate: () => Promise<Response>,
   health: () => Promise<Response> = () =>
     Promise.resolve(new Response('{"status":"ok"}')),
+  models: () => Promise<Response> = () =>
+    Promise.resolve(new Response('{"models":[]}')),
 ) {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString()
-      return url.endsWith('/health') ? health() : generate()
+      if (url.endsWith('/health')) return health()
+      if (url.endsWith('/models')) return models()
+      return generate()
     }),
   )
 }

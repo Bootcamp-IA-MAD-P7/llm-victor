@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, generatePost, generationErrorMessage } from './api'
+import {
+  ApiError,
+  fetchModels,
+  generatePost,
+  generationErrorMessage,
+} from './api'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -189,5 +194,47 @@ describe('generationErrorMessage', () => {
     expect(generationErrorMessage(new ApiError('x'))).toMatch(
       /conectar con la API/,
     )
+  })
+})
+
+describe('fetchModels', () => {
+  it('returns the models from the API', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          models: [{ id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B' }],
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchModels()).resolves.toEqual([
+      { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B' },
+    ])
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8000/models')
+  })
+
+  it('throws an ApiError with the status on a server error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('nope', { status: 500 })),
+    )
+
+    const error = await fetchModels().catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBe(500)
+  })
+
+  it('throws an ApiError without status on a network failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
+    )
+
+    const error = await fetchModels().catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBeUndefined()
   })
 })
