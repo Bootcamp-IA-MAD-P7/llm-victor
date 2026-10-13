@@ -1,8 +1,13 @@
 """Generate endpoint."""
 
-from fastapi import APIRouter, HTTPException
+from typing import cast
+
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
+from ..catalog import parse_catalog
+from ..config import Settings
+from ..providers.groq import ModelUnavailableError
 from ..workflows.generate_direct import Audience, Language, Tone, generate_direct
 
 router = APIRouter()
@@ -13,6 +18,7 @@ class GenerateRequest(BaseModel):
     audience: Audience
     tone: Tone
     language: Language
+    model: str = Field(..., min_length=1)
     context: str | None = None
 
     @field_validator("brief")
@@ -39,13 +45,19 @@ class GenerateResponse(BaseModel):
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_post(req: GenerateRequest) -> GenerateResponse:
+async def generate_post(req: GenerateRequest, request: Request) -> GenerateResponse:
+    settings = cast(Settings, request.app.state.settings)
+    catalog_ids = {model.id for model in parse_catalog(settings.text_models)}
+    if req.model not in catalog_ids:
+        raise HTTPException(status_code=422, detail="Unknown model")
+
     try:
         result = generate_direct(
             brief=req.brief,
             audience=req.audience,
             tone=req.tone,
             language=req.language,
+            model=req.model,
             context=req.context,
         )
         return GenerateResponse(
@@ -53,5 +65,7 @@ async def generate_post(req: GenerateRequest) -> GenerateResponse:
             provider=result.get("provider", "groq"),
             model=result.get("model", "unknown"),
         )
+    except ModelUnavailableError as exc:
+        raise HTTPException(status_code=409, detail="Selected model is not available") from exc
     except Exception as exc:  # pragma: no cover
         raise HTTPException(status_code=500, detail="Generation failed") from exc
