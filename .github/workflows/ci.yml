@@ -37,6 +37,10 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+        env:
+          VITE_API_URL: https://api.example.com
+      - name: Build production image
+        run: docker build --target prod --build-arg VITE_API_URL=https://api.example.com .
 
   api:
     name: API
