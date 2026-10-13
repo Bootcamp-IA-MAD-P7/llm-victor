@@ -7,7 +7,7 @@ COMPOSE := docker compose
 	build-frontend up-frontend down-frontend restart-frontend ps-frontend logs-frontend shell-frontend \
 	build-api up-api down-api restart-api ps-api logs-api shell-api \
 	pull-qdrant up-qdrant down-qdrant restart-qdrant ps-qdrant logs-qdrant shell-qdrant \
-	clean-volumes image-frontend
+	clean-volumes image-frontend image-api
 
 help:
 	$(info Uso: make COMANDO)
@@ -39,6 +39,7 @@ help:
 	$(info )
 	$(info Despliegue:)
 	$(info make image-frontend VITE_API_URL=https://...  Construye la imagen de producción de la web)
+	$(info make image-api       Construye la imagen de producción de la API)
 	@exit 0
 
 build:
@@ -119,6 +120,10 @@ logs-api:
 
 shell-api:
 	$(COMPOSE) exec api sh
+
+# Imagen de producción, sin Compose; se configura por entorno al ejecutarla.
+image-api:
+	docker build --target prod -t ai-content-studio-api:prod backend
 
 # qdrant
 
