@@ -3,12 +3,13 @@ import { useState } from 'react'
 import { ApiStatus } from '@/components/api-status'
 import { BriefingForm } from '@/components/briefing-form'
 import { ResultView } from '@/components/result-view'
+import type { GenerateResponse } from '@/lib/api'
 
 type State = 'idle' | 'loading' | 'done' | 'error'
 
 function App() {
   const [state, setState] = useState<State>('idle')
-  const [result, setResult] = useState('')
+  const [result, setResult] = useState<GenerateResponse | null>(null)
   const [error, setError] = useState('')
 
   return (
@@ -28,8 +29,8 @@ function App() {
           setError('')
           setState('loading')
         }}
-        onResult={(text) => {
-          setResult(text)
+        onResult={(generated) => {
+          setResult(generated)
           setState('done')
         }}
         onError={(message) => {
@@ -43,7 +44,13 @@ function App() {
           {error}
         </p>
       )}
-      {state === 'done' && <ResultView text={result} />}
+      {state === 'done' && result && (
+        <ResultView
+          text={result.text}
+          provider={result.provider}
+          model={result.model}
+        />
+      )}
     </main>
   )
 }

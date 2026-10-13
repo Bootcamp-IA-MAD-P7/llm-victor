@@ -49,6 +49,7 @@ describe('App', () => {
 
     expect(screen.getByText('Generando…')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Generar' })).toBeDisabled()
+    expect(screen.queryByText(/Generado con/)).not.toBeInTheDocument()
 
     resolveGenerate(
       new Response(
@@ -56,6 +57,7 @@ describe('App', () => {
       ),
     )
     expect(await screen.findByText('resultado')).toBeInTheDocument()
+    expect(screen.getByText('Generado con groq · x')).toBeInTheDocument()
   })
 
   it('shows a comprehensible error and keeps the briefing to retry', async () => {
