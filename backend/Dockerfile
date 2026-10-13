@@ -13,3 +13,14 @@ RUN uv sync --frozen
 COPY . .
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+FROM base AS prod
+COPY pyproject.toml uv.lock .python-version ./
+RUN uv sync --frozen --no-dev
+COPY app ./app
+RUN useradd --system --no-create-home app
+USER app
+# Las plataformas indican el puerto en PORT; toda la configuración llega por entorno (ARCHITECTURE §9).
+ENV PORT=8000
+EXPOSE 8000
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"$PORT\""]
