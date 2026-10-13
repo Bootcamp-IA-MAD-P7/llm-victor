@@ -1,14 +1,18 @@
 from fastapi.testclient import TestClient
 
-from app.catalog import parse_catalog
+from app.catalog import CatalogEntry, Model, build_catalog, parse_catalog
 from app.config import Settings
 from app.main import create_app
 
 
-def make_client(text_models: str | None = None) -> TestClient:
+def make_client(text_models: str | None = None, openrouter_models: str = "") -> TestClient:
     settings = Settings(cors_origins="http://localhost:5173")
     if text_models is not None:
-        settings = Settings(cors_origins="http://localhost:5173", text_models=text_models)
+        settings = Settings(
+            cors_origins="http://localhost:5173",
+            text_models=text_models,
+            openrouter_models=openrouter_models,
+        )
     return TestClient(create_app(settings))
 
 
@@ -58,4 +62,35 @@ def test_models_returns_default_catalog() -> None:
     response = make_client().get("/models")
 
     assert response.status_code == 200
-    assert response.json()["models"][0]["id"] == "llama-3.1-8b-instant"
+    ids = [model["id"] for model in response.json()["models"]]
+    assert ids[0] == "openai/gpt-oss-120b"
+    assert "nvidia/nemotron-3-super-120b-a12b:free" in ids
+
+
+def test_build_catalog_lists_groq_then_openrouter() -> None:
+    catalog = build_catalog("groq-model|Groq", "or/model:free|OpenRouter")
+
+    assert catalog == [
+        CatalogEntry(Model(id="groq-model", label="Groq"), "groq"),
+        CatalogEntry(Model(id="or/model:free", label="OpenRouter"), "openrouter"),
+    ]
+
+
+def test_build_catalog_keeps_groq_on_duplicate_id() -> None:
+    catalog = build_catalog("shared|Groq", "shared|OpenRouter,or-only")
+
+    assert [(entry.model.id, entry.provider) for entry in catalog] == [
+        ("shared", "groq"),
+        ("or-only", "openrouter"),
+    ]
+
+
+def test_models_includes_openrouter_models() -> None:
+    response = make_client("groq-model|Groq", "or/model:free|Free model").get("/models")
+
+    assert response.json() == {
+        "models": [
+            {"id": "groq-model", "label": "Groq"},
+            {"id": "or/model:free", "label": "Free model"},
+        ]
+    }

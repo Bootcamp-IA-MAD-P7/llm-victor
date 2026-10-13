@@ -29,7 +29,7 @@ flowchart LR
 | Interfaz web | React, Vite, TypeScript, Tailwind CSS y shadcn/ui; web estática servida como servicio propio | Actual | — |
 | API | Python 3.13 y FastAPI, con uv | Actual | — |
 | Flujos de IA | LangGraph; LangChain para modelos, embeddings y recuperación donde aporte valor | Objetivo | — |
-| Generación de texto | Groq como proveedor principal y OpenRouter como alternativo | Objetivo | — |
+| Generación de texto | Groq y OpenRouter, ambos seleccionables en el catálogo; OpenRouter también es el fallback de Groq. Solo modelos gratuitos | Actual | — |
 | Generación de imágenes | Cloudflare Workers AI, solo con modelo y cuota gratuitos, sin facturación ni fallback de pago | Candidata | Se confirma en I3-E1 |
 | Embeddings | Modelo multilingüe local en el backend y la ingesta; BGE-M3 como candidato inicial | Candidata | Se decide en I4-E2 |
 | Base vectorial | Qdrant, contenedor local con volumen persistente; remoto por configuración en el futuro | Actual: la API aún no lo usa | — |
@@ -104,7 +104,8 @@ sequenceDiagram
     Web-->>Usuario: Resultado revisable
 ```
 
-- El fallback a OpenRouter solo se activa por indisponibilidad, límite o *rate limit* de Groq; los errores de validación de la solicitud no lo activan. Si el fallback cambia de modelo, la respuesta lo indica.
+- El catálogo une los modelos de Groq (`TEXT_MODELS`) y los de OpenRouter (`OPENROUTER_MODELS`, gratuitos con sufijo `:free`); la API envía cada solicitud al proveedor del modelo elegido.
+- El fallback a OpenRouter solo se activa por indisponibilidad, límite o *rate limit* de Groq; los errores de validación de la solicitud no lo activan. Es una única petición a OpenRouter con sus modelos en orden: OpenRouter pasa al siguiente si uno falla. Si el modelo cambia, la respuesta lo indica.
 - Si la imagen falla o se agota la cuota de Cloudflare, el error se comunica sin perder el texto.
 - Contrato `frontend` → `api`: [API HTTP](CONTRACTS/api.md). La generación y su contrato de error se añaden en I1-E1.
 

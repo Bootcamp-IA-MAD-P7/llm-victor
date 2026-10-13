@@ -48,7 +48,7 @@ class GroqProvider:
         deterministic stub for local development and tests; a real call failure
         propagates so the API can report it.
         """
-        model_name = str(model or os.getenv("DEFAULT_MODEL_GROQ", "llama-3.1-8b-instant"))
+        model_name = str(model or os.getenv("DEFAULT_MODEL_GROQ", "openai/gpt-oss-120b"))
 
         if not self.api_key:
             return {

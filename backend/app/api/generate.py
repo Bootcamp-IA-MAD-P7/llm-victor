@@ -5,9 +5,9 @@ from typing import cast
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
-from ..catalog import parse_catalog
+from ..catalog import build_catalog, parse_catalog
 from ..config import Settings
-from ..providers.gateway import TextProviderGateway
+from ..providers.gateway import TextProvider, TextProviderGateway
 from ..providers.groq import GroqProvider, ModelUnavailableError
 from ..providers.openrouter import OpenRouterProvider
 from ..workflows.generate_direct import Audience, Language, Tone, generate_direct
@@ -49,18 +49,24 @@ class GenerateResponse(BaseModel):
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_post(req: GenerateRequest, request: Request) -> GenerateResponse:
     settings = cast(Settings, request.app.state.settings)
-    catalog_ids = {model.id for model in parse_catalog(settings.text_models)}
-    if req.model not in catalog_ids:
+    providers = {
+        entry.model.id: entry.provider
+        for entry in build_catalog(settings.text_models, settings.openrouter_models)
+    }
+    if req.model not in providers:
         raise HTTPException(status_code=422, detail="Unknown model")
 
     try:
-        provider = TextProviderGateway(
-            primary=GroqProvider(api_key=settings.groq_api_key or None),
-            fallback=OpenRouterProvider(
-                api_key=settings.openrouter_api_key or None,
-                model=settings.openrouter_model,
-            ),
+        openrouter = OpenRouterProvider(
+            api_key=settings.openrouter_api_key or None,
+            models=[model.id for model in parse_catalog(settings.openrouter_models)] or None,
         )
+        provider: TextProvider = openrouter
+        if providers[req.model] == "groq":
+            provider = TextProviderGateway(
+                primary=GroqProvider(api_key=settings.groq_api_key or None),
+                fallback=openrouter,
+            )
         result = generate_direct(
             brief=req.brief,
             audience=req.audience,

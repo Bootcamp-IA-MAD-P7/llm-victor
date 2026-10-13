@@ -7,7 +7,7 @@ from typing import cast
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from ..catalog import Model, parse_catalog
+from ..catalog import Model, build_catalog
 from ..config import Settings
 
 router = APIRouter()
@@ -20,4 +20,5 @@ class ModelsResponse(BaseModel):
 @router.get("/models", response_model=ModelsResponse)
 def list_models(request: Request) -> ModelsResponse:
     settings = cast(Settings, request.app.state.settings)
-    return ModelsResponse(models=parse_catalog(settings.text_models))
+    catalog = build_catalog(settings.text_models, settings.openrouter_models)
+    return ModelsResponse(models=[entry.model for entry in catalog])

@@ -27,11 +27,23 @@ def _isolate_provider_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep generation tests hermetic from real provider keys in the environment."""
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    monkeypatch.delenv("OPENROUTER_MODEL", raising=False)
+    monkeypatch.delenv("TEXT_MODELS", raising=False)
+    monkeypatch.delenv("OPENROUTER_MODELS", raising=False)
+
+
+OPENROUTER_MODEL = "or/model:free"
 
 
 def make_client() -> TestClient:
-    return TestClient(create_app(Settings(cors_origins="http://localhost:5173")))
+    return TestClient(
+        create_app(
+            Settings(
+                cors_origins="http://localhost:5173",
+                text_models="llama-3.1-8b-instant|Llama 3.1 8B Instant",
+                openrouter_models=f"{OPENROUTER_MODEL}|Free model,or/backup:free",
+            )
+        )
+    )
 
 
 @pytest.mark.parametrize("brief", ["", "   "])
@@ -514,12 +526,12 @@ def _recording_fallback() -> tuple[type, list[tuple[str, str | None]]]:
     calls: list[tuple[str, str | None]] = []
 
     class Fallback:
-        def __init__(self, *, api_key: str | None = None, model: str | None = None) -> None:
-            self._model = model
+        def __init__(self, *, api_key: str | None = None, models: list[str] | None = None) -> None:
+            self._models = models or []
 
         def generate_text(self, prompt: str, model: str | None = None) -> dict[str, str]:
             calls.append((prompt, model))
-            return {"text": "or", "provider": "openrouter", "model": str(self._model)}
+            return {"text": "or", "provider": "openrouter", "model": model or self._models[0]}
 
     return Fallback, calls
 
@@ -535,7 +547,7 @@ def test_generate_falls_back_to_openrouter_on_eligible_failure(
 
     assert response.status_code == 200
     assert response.json()["provider"] == "openrouter"
-    assert response.json()["model"] == "meta-llama/llama-3.1-8b-instruct"
+    assert response.json()["model"] == OPENROUTER_MODEL
     assert len(calls) == 1
     assert calls[0][1] is None
 
@@ -568,3 +580,19 @@ def test_generate_does_not_fall_back_on_model_unavailable(
 
     assert response.status_code == 409
     assert calls == []
+
+
+def test_generate_uses_openrouter_directly_for_openrouter_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fallback, calls = _recording_fallback()
+    monkeypatch.setattr(generate_module, "GroqProvider", _primary_raising(AssertionError("groq")))
+    monkeypatch.setattr(generate_module, "OpenRouterProvider", fallback)
+
+    response = make_client().post(
+        "/generate", json={**VALID_CONFIG, "brief": "hola", "model": OPENROUTER_MODEL}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"text": "or", "provider": "openrouter", "model": OPENROUTER_MODEL}
+    assert calls[0][1] == OPENROUTER_MODEL

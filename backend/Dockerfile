@@ -12,7 +12,9 @@ COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen
 COPY . .
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Solo se vigila el código: el .venv del equipo también está en el bind mount y con polling
+# hace muy lento el arranque.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "app"]
 
 FROM base AS prod
 COPY pyproject.toml uv.lock .python-version ./

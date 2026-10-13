@@ -199,7 +199,7 @@ Cuando el modelo elegido deja de estar disponible, el sistema SHALL comunicarlo 
 
 ### Requirement: Recurrir a OpenRouter ante fallos elegibles de Groq (RNF-07)
 
-Cuando Groq no está disponible o alcanza un límite o *rate limit*, el sistema SHALL recurrir una vez a OpenRouter para completar la generación. El fallback NO SHALL activarse por errores de validación de la solicitud ni por un modelo que el proveedor rechaza como no disponible. Si ambos proveedores fallan, el sistema SHALL devolver un error comprensible sin mostrar detalles internos.
+Cuando Groq no está disponible o alcanza un límite o *rate limit*, el sistema SHALL recurrir una vez a OpenRouter para completar la generación, en una única petición con los modelos de OpenRouter configurados en orden. El fallback NO SHALL activarse por errores de validación de la solicitud ni por un modelo que el proveedor rechaza como no disponible. Si ambos proveedores fallan, el sistema SHALL devolver un error comprensible sin mostrar detalles internos.
 
 #### Scenario: Indisponibilidad o límite de Groq activa el fallback
 

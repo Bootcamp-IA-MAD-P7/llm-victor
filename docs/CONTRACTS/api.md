@@ -57,7 +57,7 @@ Ninguna.
 
 ## `GET /models`
 
-Devuelve el catálogo de modelos de texto disponibles para la generación, configurados en la API. No expone secretos ni detalles internos del proveedor.
+Devuelve el catálogo de modelos de texto disponibles para la generación, configurados en la API: primero los de Groq (`TEXT_MODELS`) y después los de OpenRouter (`OPENROUTER_MODELS`). No expone secretos ni detalles internos del proveedor; la etiqueta puede nombrar el proveedor.
 
 ### Entrada
 
@@ -83,7 +83,7 @@ Ninguna.
 
 Genera una publicación de LinkedIn a partir de un briefing enviado por el frontend.
 
-El proveedor principal es Groq. Ante una indisponibilidad, un límite o un *rate limit* de Groq, la API recurre una vez a OpenRouter y responde con el resultado de OpenRouter; si ambos proveedores fallan, la generación falla. Los errores de validación de la solicitud y un modelo que Groq ya no ofrece no activan el recurso a OpenRouter.
+Cada modelo del catálogo pertenece a un proveedor. Con un modelo de Groq, ante una indisponibilidad, un límite o un *rate limit* de Groq, la API recurre una vez a OpenRouter con sus modelos configurados en orden y responde con el resultado de OpenRouter; si ambos proveedores fallan, la generación falla. Los errores de validación de la solicitud y un modelo que Groq ya no ofrece no activan el recurso a OpenRouter. Con un modelo de OpenRouter, la API llama a OpenRouter con ese modelo primero y los demás configurados detrás, y OpenRouter pasa al siguiente si uno falla o está limitado.
 
 ### Entrada
 
@@ -105,8 +105,8 @@ El proveedor principal es Groq. Ante una indisponibilidad, un límite o un *rate
 | Campo | Tipo | Significado |
 |---|---|---|
 | `text` | `string` | Texto generado listo para revisar |
-| `provider` | `string` | Proveedor que generó el texto: `groq` o, si se activó el fallback, `openrouter` |
-| `model` | `string` | Modelo efectivo utilizado, que puede diferir del solicitado cuando el fallback cambia de modelo |
+| `provider` | `string` | Proveedor que generó el texto: `groq` u `openrouter` (por elección del modelo o por fallback) |
+| `model` | `string` | Modelo efectivo utilizado, que puede diferir del solicitado cuando el fallback o el enrutado de OpenRouter cambian de modelo |
 
 ### Errores
 
