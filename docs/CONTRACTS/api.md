@@ -1,7 +1,7 @@
 # API HTTP
 
 - **Estado:** Aceptado
-- **Versión:** 0.7.0
+- **Versión:** 0.8.0
 - **Productor → consumidores:** `api` → `frontend`
 - **Artefacto ejecutable:** ninguno. FastAPI publica el esquema OpenAPI en `/openapi.json` mientras la API está en marcha, pero este documento es la fuente de verdad.
 
@@ -61,6 +61,8 @@ Ninguna.
 
 Genera una publicación de LinkedIn a partir de un briefing enviado por el frontend.
 
+El proveedor principal es Groq. Ante una indisponibilidad, un límite o un *rate limit* de Groq, la API recurre una vez a OpenRouter y responde con el resultado de OpenRouter; si ambos proveedores fallan, la generación falla. Los errores de validación de la solicitud y un modelo que Groq ya no ofrece no activan el recurso a OpenRouter.
+
 ### Entrada
 
 `application/json`:
@@ -81,8 +83,8 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 | Campo | Tipo | Significado |
 |---|---|---|
 | `text` | `string` | Texto generado listo para revisar |
-| `provider` | `string` | Proveedor utilizado (ej. `groq`) |
-| `model` | `string` | Modelo utilizado |
+| `provider` | `string` | Proveedor que generó el texto: `groq` o, si se activó el fallback, `openrouter` |
+| `model` | `string` | Modelo efectivo utilizado, que puede diferir del solicitado cuando el fallback cambia de modelo |
 
 ### Errores
 
@@ -90,7 +92,7 @@ Genera una publicación de LinkedIn a partir de un briefing enviado por el front
 |---|---|---|
 | `422 Unprocessable Entity` | Falta `brief`, está vacío o solo contiene espacios, `audience`, `tone`, `language` o `model` faltan o no son un valor permitido (`model` fuera del catálogo), o el cuerpo no es válido | No enviar un briefing vacío ni valores fuera de los permitidos; indicar al usuario que revise el briefing y las opciones |
 | `409 Conflict` | El `model` estaba en el catálogo pero el proveedor ya no lo ofrece (modelo retirado o inexistente) | Comunicar que el modelo ya no está disponible y permitir elegir otro; conservar el briefing. El sistema no sustituye el modelo automáticamente |
-| `500 Internal Server Error` | Error en la generación (por ejemplo, fallo del proveedor) | Informar del fallo sin mostrar detalles internos y conservar el briefing para reintentar |
+| `500 Internal Server Error` | Error en la generación (por ejemplo, fallo del proveedor; también si Groq falla y OpenRouter no completa el fallback) | Informar del fallo sin mostrar detalles internos y conservar el briefing para reintentar |
 
 ## Compatibilidad
 
